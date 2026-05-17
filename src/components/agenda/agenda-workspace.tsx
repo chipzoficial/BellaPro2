@@ -91,6 +91,14 @@ function getStatusActions(status: AppointmentStatus) {
   return [];
 }
 
+function getStatusSummary(status: AppointmentStatus) {
+  if (status === AppointmentStatus.PENDING) return "Pendente de confirmação";
+  if (status === AppointmentStatus.CONFIRMED) return "Confirmado";
+  if (status === AppointmentStatus.COMPLETED) return "Concluído";
+  if (status === AppointmentStatus.CANCELED) return "Cancelado";
+  return "Não compareceu";
+}
+
 function getDayIndicatorCount(appointments: AgendaAppointment[], day: Date) {
   return appointments.filter((item) => isSameDay(item.startAt, day)).length;
 }
@@ -394,7 +402,7 @@ export function AgendaWorkspace({
                             type="button"
                             onClick={() => setSelectedAppointment(appointment)}
                             className={cn(
-                              "absolute left-3 right-3 rounded-2xl border px-3 py-3 text-left shadow-sm transition-transform hover:-translate-y-0.5",
+                              "absolute left-3 right-3 overflow-hidden rounded-2xl border px-3 py-3 text-left shadow-sm transition-transform hover:-translate-y-0.5",
                               appointment.status === AppointmentStatus.CONFIRMED && "border-brand-200 bg-brand-50/95",
                               appointment.status === AppointmentStatus.PENDING && "border-amber-200 bg-amber-50/95",
                               appointment.status === AppointmentStatus.COMPLETED && "border-emerald-200 bg-emerald-50/95",
@@ -404,11 +412,15 @@ export function AgendaWorkspace({
                             style={{ top, height }}
                           >
                             <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                                  {format(appointment.startAt, "HH:mm")} - {format(appointment.endAt, "HH:mm")}
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-semibold text-foreground">
+                                  {format(appointment.startAt, "HH:mm")} - {format(appointment.endAt, "HH:mm")}{" "}
+                                  <span className="text-muted-foreground">-</span> {appointment.client.name}
                                 </p>
-                                <p className="mt-1 font-semibold text-foreground">{appointment.client.name}</p>
+                                <p className="mt-1 truncate text-xs text-muted-foreground">
+                                  {appointment.service.name} <span className="text-muted-foreground">-</span>{" "}
+                                  {getStatusSummary(appointment.status)}
+                                </p>
                               </div>
                               <span
                                 className={cn(
@@ -421,10 +433,6 @@ export function AgendaWorkspace({
                                 )}
                               />
                             </div>
-                            <p className="mt-2 text-sm text-foreground">{appointment.service.name}</p>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              {appointment.status === AppointmentStatus.PENDING ? "Aguardando confirmação" : "Atendimento planejado"}
-                            </p>
                           </button>
                         );
                       })}
