@@ -59,6 +59,7 @@ const HALF_HOUR = 30;
 const BASE_START_HOUR = 8;
 const BASE_END_HOUR = 20;
 const SLOT_HEIGHT = 54;
+const TIMELINE_TOP_OFFSET = 16;
 
 function buildTimeSlots(startHour: number, endHour: number) {
   const slots: string[] = [];
@@ -151,6 +152,7 @@ export function AgendaWorkspace({
   const timeSlots = useMemo(() => buildTimeSlots(timelineBounds.startHour, timelineBounds.endHour), [timelineBounds]);
   const totalMinutes = (timelineBounds.endHour - timelineBounds.startHour) * 60;
   const timelineHeight = (totalMinutes / HALF_HOUR) * SLOT_HEIGHT;
+  const timelineCanvasHeight = timelineHeight + TIMELINE_TOP_OFFSET;
 
   return (
     <div className="space-y-6">
@@ -167,13 +169,25 @@ export function AgendaWorkspace({
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap xl:items-center xl:justify-end">
             <div className="inline-flex items-center gap-1 rounded-full border border-border bg-background p-1">
-              <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => selectDay(addDays(selectedDate, -1))}>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-full border-border bg-white text-foreground"
+                onClick={() => selectDay(addDays(selectedDate, -1))}
+              >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button type="button" variant="ghost" className="h-8 rounded-full px-4 text-sm" onClick={() => selectDay(today)}>
                 Hoje
               </Button>
-              <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => selectDay(addDays(selectedDate, 1))}>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-full border-border bg-white text-foreground"
+                onClick={() => selectDay(addDays(selectedDate, 1))}
+              >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -208,10 +222,22 @@ export function AgendaWorkspace({
               <p className="text-xs text-muted-foreground">Toque em um dia para abrir a agenda.</p>
             </div>
             <div className="inline-flex items-center gap-1 rounded-full border border-border bg-background p-1">
-              <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setMonthDate(subMonths(monthDate, 1))}>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-full border-border bg-white text-foreground"
+                onClick={() => setMonthDate(subMonths(monthDate, 1))}
+              >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setMonthDate(addMonths(monthDate, 1))}>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-full border-border bg-white text-foreground"
+                onClick={() => setMonthDate(addMonths(monthDate, 1))}
+              >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -254,17 +280,13 @@ export function AgendaWorkspace({
                   )}
                 >
                   <span className="font-medium">{format(day, "d")}</span>
-                  <span className="mt-1 flex items-center gap-1">
+                  <span className="mt-1 flex min-h-4 items-center justify-center gap-1 text-[10px] font-medium">
                     {indicatorCount > 0 ? (
-                      Array.from({ length: Math.min(indicatorCount, 3) }).map((_, index) => (
-                        <span
-                          key={index}
-                          className={cn("h-1.5 w-1.5 rounded-full", selected ? "bg-white/90" : "bg-brand-500")}
-                        />
-                      ))
-                    ) : (
-                      <span className="h-1.5" />
-                    )}
+                      <>
+                        <span className={cn("h-1.5 w-1.5 rounded-full", selected ? "bg-white/90" : "bg-brand-500")} />
+                        <span className={cn(selected ? "text-white/90" : "text-brand-700")}>{indicatorCount}</span>
+                      </>
+                    ) : null}
                   </span>
                 </button>
               );
@@ -335,12 +357,12 @@ export function AgendaWorkspace({
                     <div
                       key={slot}
                       className="absolute inset-x-0 border-b border-dashed border-border/80 px-4 text-xs text-muted-foreground"
-                      style={{ top: index * SLOT_HEIGHT, height: SLOT_HEIGHT }}
+                      style={{ top: TIMELINE_TOP_OFFSET + index * SLOT_HEIGHT, height: SLOT_HEIGHT }}
                     >
-                      <span className="-translate-y-2 inline-block bg-[#fffaf9] pr-2">{slot}</span>
+                      <span className="inline-block bg-[#fffaf9] pr-2 pt-1">{slot}</span>
                     </div>
                   ))}
-                  <div style={{ height: timelineHeight }} />
+                  <div style={{ height: timelineCanvasHeight }} />
                 </div>
 
                 {visibleProfessionals.map((professional) => {
@@ -355,7 +377,7 @@ export function AgendaWorkspace({
                             "absolute inset-x-0 border-b border-border/70",
                             index % 2 === 0 ? "bg-white" : "bg-[#fffdfc]"
                           )}
-                          style={{ top: index * SLOT_HEIGHT, height: SLOT_HEIGHT }}
+                          style={{ top: TIMELINE_TOP_OFFSET + index * SLOT_HEIGHT, height: SLOT_HEIGHT }}
                         />
                       ))}
 
@@ -363,7 +385,7 @@ export function AgendaWorkspace({
                         const startMinutes =
                           (appointment.startAt.getHours() - timelineBounds.startHour) * 60 + appointment.startAt.getMinutes();
                         const duration = differenceInMinutes(appointment.endAt, appointment.startAt);
-                        const top = (startMinutes / HALF_HOUR) * SLOT_HEIGHT;
+                        const top = TIMELINE_TOP_OFFSET + (startMinutes / HALF_HOUR) * SLOT_HEIGHT;
                         const height = Math.max((duration / HALF_HOUR) * SLOT_HEIGHT - 8, 42);
 
                         return (
@@ -406,7 +428,7 @@ export function AgendaWorkspace({
                           </button>
                         );
                       })}
-                      <div style={{ height: timelineHeight }} />
+                      <div style={{ height: timelineCanvasHeight }} />
                     </div>
                   );
                 })}
