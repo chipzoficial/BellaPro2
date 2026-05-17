@@ -1,0 +1,229 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELED
+  NO_SHOW
+}
+
+enum Role {
+  ADMIN_GLOBAL
+  OWNER
+  MANAGER
+  PROFESSIONAL
+  RECEPTIONIST
+  CLIENT
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+enum WeekDay {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+model User {
+  id           String       @id @default(cuid())
+  name         String
+  email        String       @unique
+  passwordHash String
+  phone        String?
+  avatarUrl    String?
+  isActive     Boolean      @default(true)
+  memberships  Membership[]
+  professional Professional?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Organization {
+  id               String           @id @default(cuid())
+  name             String
+  slug             String           @unique
+  document         String?
+  phone            String?
+  email            String?
+  address          String?
+  city             String?
+  state            String?
+  logoUrl          String?
+  isActive         Boolean          @default(true)
+  memberships      Membership[]
+  professionals    Professional[]
+  services         Service[]
+  clients          Client[]
+  appointments     Appointment[]
+  businessHours    BusinessHour[]
+  blockedTimes     BlockedTime[]
+  subscriptions    Subscription[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           Role
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([userId, organizationId])
+}
+
+model Professional {
+  id                   String                @id @default(cuid())
+  organizationId       String
+  userId               String?               @unique
+  name                 String
+  phone                String?
+  email                String?
+  avatarUrl            String?
+  bio                  String?
+  isActive             Boolean               @default(true)
+  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                 User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  professionalServices ProfessionalService[]
+  businessHours        BusinessHour[]
+  blockedTimes         BlockedTime[]
+  appointments         Appointment[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+}
+
+model Service {
+  id                   String                @id @default(cuid())
+  organizationId       String
+  name                 String
+  description          String?
+  durationMinutes      Int
+  priceInCents         Int
+  isActive             Boolean               @default(true)
+  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  professionalServices ProfessionalService[]
+  appointments         Appointment[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+}
+
+model ProfessionalService {
+  id             String       @id @default(cuid())
+  professionalId String
+  serviceId      String
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  service        Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@unique([professionalId, serviceId])
+}
+
+model Client {
+  id             String        @id @default(cuid())
+  organizationId String
+  name           String
+  phone          String?
+  email          String?
+  notes          String?
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  appointments   Appointment[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Appointment {
+  id                 String            @id @default(cuid())
+  organizationId     String
+  clientId           String
+  professionalId     String
+  serviceId          String
+  startAt            DateTime
+  endAt              DateTime
+  status             AppointmentStatus
+  priceInCents       Int
+  notes              String?
+  cancellationReason String?
+  organization       Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client             Client            @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  professional       Professional      @relation(fields: [professionalId], references: [id], onDelete: Restrict)
+  service            Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@index([organizationId, startAt])
+  @@index([professionalId, startAt])
+}
+
+model BusinessHour {
+  id             String        @id @default(cuid())
+  organizationId String
+  professionalId String?
+  weekDay        WeekDay
+  startTime      String
+  endTime        String
+  isActive       Boolean       @default(true)
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  professional   Professional? @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model BlockedTime {
+  id             String        @id @default(cuid())
+  organizationId String
+  professionalId String?
+  startAt        DateTime
+  endAt          DateTime
+  reason         String?
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  professional   Professional? @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model SubscriptionPlan {
+  id                       String         @id @default(cuid())
+  name                     String
+  description              String?
+  priceInCents             Int
+  maxProfessionals         Int?
+  maxAppointmentsPerMonth  Int?
+  isActive                 Boolean        @default(true)
+  subscriptions            Subscription[]
+  createdAt                DateTime       @default(now())
+  updatedAt                DateTime       @updatedAt
+}
+
+model Subscription {
+  id                 String             @id @default(cuid())
+  organizationId     String
+  planId             String
+  status             SubscriptionStatus
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  organization       Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  plan               SubscriptionPlan   @relation(fields: [planId], references: [id], onDelete: Restrict)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
