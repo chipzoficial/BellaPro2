@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { toast } from "@/components/ui/use-toast";
 
@@ -29,6 +30,7 @@ export function ProfissionaisPage({
 }) {
   const [isPending, startTransition] = useTransition();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
   const form = useForm<any>({
     resolver: zodResolver(professionalSchema),
     defaultValues: { name: "", phone: "", email: "", bio: "", isActive: true, serviceIds: [] },
@@ -45,6 +47,7 @@ export function ProfissionaisPage({
       if (result.success) {
         setSelectedId(null);
         form.reset({ name: "", phone: "", email: "", bio: "", isActive: true, serviceIds: [] });
+        setOpen(false);
       }
     });
   }
@@ -60,10 +63,23 @@ export function ProfissionaisPage({
       isActive: item.isActive,
       serviceIds: item.professionalServices.map((entry) => entry.service.id),
     });
+    setOpen(true);
   }
 
   return (
-    <div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          onClick={() => {
+            setSelectedId(null);
+            form.reset({ name: "", phone: "", email: "", bio: "", isActive: true, serviceIds: [] });
+            setOpen(true);
+          }}
+        >
+          Novo profissional
+        </Button>
+      </div>
       <section className="space-y-3">
         {professionals.length ? (
           professionals.map((professional) => (
@@ -97,48 +113,57 @@ export function ProfissionaisPage({
           <EmptyState title="Nenhum profissional cadastrado" description="Cadastre profissionais e vincule os serviços realizados por cada um." />
         )}
       </section>
-      <section className="rounded-3xl border border-border bg-white p-6">
-        <h3 className="text-lg font-semibold">{selectedId ? "Editar profissional" : "Novo profissional"}</h3>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4">
-            <FormField control={form.control} name="name" render={({ field }) => <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>} />
-            <FormField control={form.control} name="phone" render={({ field }) => <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>} />
-            <FormField control={form.control} name="email" render={({ field }) => <FormItem><FormLabel>E-mail</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>} />
-            <FormField control={form.control} name="bio" render={({ field }) => <FormItem><FormLabel>Bio</FormLabel><FormControl><Textarea {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>} />
-            <FormField
-              control={form.control}
-              name="serviceIds"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Serviços realizados</FormLabel>
-                  <div className="grid gap-2 rounded-2xl bg-muted/50 p-4">
-                    {services.map((service) => {
-                      const checked = field.value?.includes(service.id);
-                      return (
-                        <label key={service.id} className="flex items-center gap-3 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={(event) => {
-                              const next = event.target.checked
-                                ? [...(field.value ?? []), service.id]
-                                : (field.value ?? []).filter((id: string) => id !== service.id);
-                              field.onChange(next);
-                            }}
-                          />
-                          <span>{service.name}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" disabled={isPending}>Salvar profissional</Button>
-          </form>
-        </Form>
-      </section>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{selectedId ? "Editar profissional" : "Novo profissional"}</DialogTitle>
+            <DialogDescription>Use um modal dedicado para o cadastro, mantendo a listagem limpa.</DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField control={form.control} name="name" render={({ field }) => <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>} />
+              <FormField control={form.control} name="phone" render={({ field }) => <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>} />
+              <FormField control={form.control} name="email" render={({ field }) => <FormItem><FormLabel>E-mail</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>} />
+              <FormField control={form.control} name="bio" render={({ field }) => <FormItem><FormLabel>Bio</FormLabel><FormControl><Textarea {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>} />
+              <FormField
+                control={form.control}
+                name="serviceIds"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Serviços realizados</FormLabel>
+                    <div className="grid gap-2 rounded-2xl bg-muted/50 p-4">
+                      {services.map((service) => {
+                        const checked = field.value?.includes(service.id);
+                        return (
+                          <label key={service.id} className="flex items-center gap-3 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(event) => {
+                                const next = event.target.checked
+                                  ? [...(field.value ?? []), service.id]
+                                  : (field.value ?? []).filter((id: string) => id !== service.id);
+                                field.onChange(next);
+                              }}
+                            />
+                            <span>{service.name}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex gap-2">
+                <Button type="submit" disabled={isPending}>Salvar profissional</Button>
+                <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { toast } from "@/components/ui/use-toast";
 
@@ -28,6 +29,7 @@ export function ClientesPage({
   initialClients: Array<{ id: string; name: string; phone: string | null; email: string | null; notes: string | null }>;
 }) {
   const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const form = useForm<ClientInput>({
     resolver: zodResolver(clientSchema),
@@ -51,6 +53,7 @@ export function ClientesPage({
       }
       toast.success(result.message);
       form.reset({ name: "", phone: "", email: "", notes: "" });
+      setOpen(false);
     });
   }
 
@@ -62,6 +65,7 @@ export function ClientesPage({
       email: client.email ?? "",
       notes: client.notes ?? "",
     });
+    setOpen(true);
   }
 
   function removeClient(id: string) {
@@ -76,9 +80,20 @@ export function ClientesPage({
   }
 
   return (
-    <div className="grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
-      <section className="space-y-4">
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <SearchInput placeholder="Buscar por nome, telefone ou e-mail" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <Button
+          type="button"
+          onClick={() => {
+            form.reset({ name: "", phone: "", email: "", notes: "" });
+            setOpen(true);
+          }}
+        >
+          Novo cliente
+        </Button>
+      </div>
+      <section>
         {filtered.length ? (
           <Table>
             <TableHeader>
@@ -113,22 +128,27 @@ export function ClientesPage({
           <EmptyState title="Nenhum cliente encontrado" description="Cadastre clientes para organizar o histórico e acelerar novos agendamentos." />
         )}
       </section>
-      <section className="rounded-3xl border border-border bg-white p-6">
-        <h3 className="text-lg font-semibold">Cadastro rápido</h3>
-        <p className="mt-1 text-sm text-muted-foreground">Crie ou edite clientes sem sair da listagem.</p>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4">
-            <FormField control={form.control} name="name" render={({ field }) => <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>} />
-            <FormField control={form.control} name="phone" render={({ field }) => <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>} />
-            <FormField control={form.control} name="email" render={({ field }) => <FormItem><FormLabel>E-mail</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>} />
-            <FormField control={form.control} name="notes" render={({ field }) => <FormItem><FormLabel>Observações</FormLabel><FormControl><Textarea {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>} />
-            <div className="flex gap-2">
-              <Button type="submit" disabled={isPending}>Salvar cliente</Button>
-              <Button type="button" variant="outline" onClick={() => form.reset({ name: "", phone: "", email: "", notes: "" })}>Limpar</Button>
-            </div>
-          </form>
-        </Form>
-      </section>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{form.getValues("id") ? "Editar cliente" : "Novo cliente"}</DialogTitle>
+            <DialogDescription>Cadastre ou ajuste os dados do cliente sem poluir a tela de listagem.</DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField control={form.control} name="name" render={({ field }) => <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>} />
+              <FormField control={form.control} name="phone" render={({ field }) => <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>} />
+              <FormField control={form.control} name="email" render={({ field }) => <FormItem><FormLabel>E-mail</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>} />
+              <FormField control={form.control} name="notes" render={({ field }) => <FormItem><FormLabel>Observações</FormLabel><FormControl><Textarea {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>} />
+              <div className="flex gap-2">
+                <Button type="submit" disabled={isPending}>Salvar cliente</Button>
+                <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
