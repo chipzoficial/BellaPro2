@@ -58,8 +58,19 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
         professionalId: selectedProfessionalId || undefined,
         date: watchedDate,
       });
+      const currentTime = form.getValues("time");
+      const currentSelectedProfessionalId = form.getValues("professionalId");
       setAvailableSlots(nextSlots);
-      form.setValue("time", "");
+
+      const stillAvailable = nextSlots.some(
+        (slot) =>
+          slot.time === currentTime &&
+          (!currentSelectedProfessionalId || slot.professionalId === currentSelectedProfessionalId)
+      );
+
+      if (!stillAvailable) {
+        form.setValue("time", "");
+      }
     });
   }, [availableProfessionals, form, selectedProfessionalId, slug, watchedDate, watchedServiceId]);
 
@@ -90,9 +101,9 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
             control={form.control}
             name="serviceId"
             render={({ field }) => (
-              <FormItem>
+                <FormItem>
                 <FormLabel>Serviço</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um serviço" />
@@ -121,7 +132,7 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
                     field.onChange(value === "any" ? "" : value);
                     setSelectedProfessionalId(value === "any" ? "" : value);
                   }}
-                  defaultValue={field.value || "any"}
+                  value={field.value || "any"}
                 >
                   <FormControl>
                     <SelectTrigger>
