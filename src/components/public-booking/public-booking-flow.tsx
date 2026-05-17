@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { FieldErrors } from "react-hook-form";
 import { useForm } from "react-hook-form";
@@ -37,6 +37,7 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
   const [isSubmitting, startSubmitting] = useTransition();
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>("");
   const [availableSlots, setAvailableSlots] = useState(slots);
+  const lastAvailabilityKeyRef = useRef("");
   const form = useForm({
     resolver: zodResolver(publicBookingSchema),
     defaultValues: {
@@ -79,13 +80,19 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
   );
 
   useEffect(() => {
+    if (!watchedProfessionalId) return;
+    if (availableProfessionals.some((professional) => professional.id === watchedProfessionalId)) return;
+
+    form.setValue("professionalId", "");
+    setSelectedProfessionalId("");
+  }, [availableProfessionals, form, watchedProfessionalId]);
+
+  useEffect(() => {
     if (!watchedServiceId || !watchedDate) return;
 
-    const currentProfessionalId = form.getValues("professionalId");
-    if (currentProfessionalId && !availableProfessionals.some((professional) => professional.id === currentProfessionalId)) {
-      form.setValue("professionalId", "");
-      setSelectedProfessionalId("");
-    }
+    const availabilityKey = [slug, watchedServiceId, selectedProfessionalId || "any", watchedDate].join(":");
+    if (lastAvailabilityKeyRef.current === availabilityKey) return;
+    lastAvailabilityKeyRef.current = availabilityKey;
 
     startLoadingSlots(async () => {
       const nextSlots = await getPublicAvailability({
@@ -108,7 +115,7 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
         form.setValue("time", "");
       }
     });
-  }, [availableProfessionals, form, selectedProfessionalId, slug, watchedDate, watchedServiceId]);
+  }, [form, selectedProfessionalId, slug, watchedDate, watchedServiceId]);
 
   async function goToNextStep() {
     if (step === 1) {
