@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { FieldErrors } from "react-hook-form";
 import { useForm } from "react-hook-form";
-import { CalendarDays, ChevronLeft, ChevronRight, CircleCheckBig, Scissors, UserRound } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, CircleCheckBig, Scissors } from "lucide-react";
 import { publicBookingSchema } from "@/lib/validations/entities";
 import { createPublicBooking, getPublicAvailability } from "@/server/actions/domain";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -53,24 +53,29 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
   });
 
   const watchedServiceId = form.watch("serviceId");
+  const watchedProfessionalId = form.watch("professionalId");
   const watchedDate = form.watch("date");
-  const availableProfessionals = professionals.filter((professional) => professional.serviceIds.includes(watchedServiceId));
+  const watchedTime = form.watch("time");
+  const availableProfessionals = useMemo(
+    () => professionals.filter((professional) => professional.serviceIds.includes(watchedServiceId)),
+    [professionals, watchedServiceId]
+  );
   const selectedService = useMemo(
-    () => services.find((service) => service.id === form.getValues("serviceId")) ?? null,
-    [form, services, watchedServiceId]
+    () => services.find((service) => service.id === watchedServiceId) ?? null,
+    [services, watchedServiceId]
   );
   const selectedProfessional = useMemo(
-    () => professionals.find((professional) => professional.id === form.getValues("professionalId")) ?? null,
-    [form, professionals, selectedProfessionalId]
+    () => professionals.find((professional) => professional.id === watchedProfessionalId) ?? null,
+    [professionals, watchedProfessionalId]
   );
   const selectedSlot = useMemo(
     () =>
       availableSlots.find(
         (slot) =>
-          slot.time === form.getValues("time") &&
-          (!form.getValues("professionalId") || slot.professionalId === form.getValues("professionalId"))
+          slot.time === watchedTime &&
+          (!watchedProfessionalId || slot.professionalId === watchedProfessionalId)
       ) ?? null,
-    [availableSlots, form]
+    [availableSlots, watchedProfessionalId, watchedTime]
   );
 
   useEffect(() => {
