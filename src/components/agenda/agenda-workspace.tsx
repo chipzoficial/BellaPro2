@@ -181,10 +181,11 @@ export function AgendaWorkspace({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-xl border border-border bg-white text-foreground hover:bg-muted"
+                className="h-9 w-9 rounded-xl border border-border bg-white text-brand-700 hover:bg-muted"
                 onClick={() => selectDay(addDays(selectedDate, -1))}
+                aria-label="Dia anterior"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4 shrink-0 text-brand-700 stroke-[2.5]" />
               </Button>
               <Button type="button" variant="ghost" className="h-9 rounded-xl px-4 text-sm" onClick={() => selectDay(today)}>
                 Hoje
@@ -193,10 +194,11 @@ export function AgendaWorkspace({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-xl border border-border bg-white text-foreground hover:bg-muted"
+                className="h-9 w-9 rounded-xl border border-border bg-white text-brand-700 hover:bg-muted"
                 onClick={() => selectDay(addDays(selectedDate, 1))}
+                aria-label="Próximo dia"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4 shrink-0 text-brand-700 stroke-[2.5]" />
               </Button>
             </div>
             <Select value={selectedProfessionalId} onValueChange={setSelectedProfessionalId}>
@@ -234,19 +236,21 @@ export function AgendaWorkspace({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-xl border border-border bg-white text-foreground hover:bg-muted"
+                className="h-9 w-9 rounded-xl border border-border bg-white text-brand-700 hover:bg-muted"
                 onClick={() => setMonthDate(subMonths(monthDate, 1))}
+                aria-label="Mês anterior"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4 shrink-0 text-brand-700 stroke-[2.5]" />
               </Button>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-xl border border-border bg-white text-foreground hover:bg-muted"
+                className="h-9 w-9 rounded-xl border border-border bg-white text-brand-700 hover:bg-muted"
                 onClick={() => setMonthDate(addMonths(monthDate, 1))}
+                aria-label="Próximo mês"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4 shrink-0 text-brand-700 stroke-[2.5]" />
               </Button>
             </div>
           </div>
