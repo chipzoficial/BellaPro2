@@ -45,7 +45,11 @@ export default async function PublicSlugPage({ params }: { params: Promise<{ slu
               <PublicBookingFlow
                 slug={organization.slug}
                 services={organization.services.map((service) => ({ id: service.id, name: service.name }))}
-                professionals={organization.professionals.map((professional) => ({ id: professional.id, name: professional.name }))}
+                professionals={organization.professionals.map((professional) => ({
+                  id: professional.id,
+                  name: professional.name,
+                  serviceIds: professional.professionalServices.map((entry) => entry.serviceId),
+                }))}
                 slots={slots}
               />
             </CardContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AppointmentStatus } from "@prisma/client";
 import { useForm } from "react-hook-form";
@@ -24,7 +24,11 @@ export function AgendamentosPage({
   appointments: Array<any>;
   clients: Array<{ id: string; name: string }>;
   professionals: Array<{ id: string; name: string }>;
-  services: Array<{ id: string; name: string }>;
+  services: Array<{
+    id: string;
+    name: string;
+    professionalServices: Array<{ professional: { id: string; name: string } }>;
+  }>;
 }) {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isPending, startTransition] = useTransition();
@@ -39,6 +43,27 @@ export function AgendamentosPage({
       notes: "",
     },
   });
+  const watchedServiceId = form.watch("serviceId");
+
+  const availableProfessionals = useMemo(() => {
+    const selectedService = services.find((service) => service.id === watchedServiceId);
+    if (!selectedService) return professionals;
+
+    const allowedIds = new Set(selectedService.professionalServices.map((entry) => entry.professional.id));
+    return professionals.filter((professional) => allowedIds.has(professional.id));
+  }, [professionals, services, watchedServiceId]);
+
+  useEffect(() => {
+    const currentProfessionalId = form.getValues("professionalId");
+    if (!currentProfessionalId) return;
+
+    const stillAllowed = availableProfessionals.some((professional) => professional.id === currentProfessionalId);
+    if (!stillAllowed) {
+      form.setValue("professionalId", availableProfessionals[0]?.id ?? "", {
+        shouldValidate: true,
+      });
+    }
+  }, [availableProfessionals, form]);
 
   const filtered = useMemo(
     () => appointments.filter((item) => (statusFilter === "all" ? true : item.status === statusFilter)),
@@ -116,8 +141,34 @@ export function AgendamentosPage({
             }
           }))} className="mt-6 space-y-4">
             <FormField control={form.control} name="clientId" render={({ field }) => <FormItem><FormLabel>Cliente</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{clients.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>} />
-            <FormField control={form.control} name="professionalId" render={({ field }) => <FormItem><FormLabel>Profissional</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{professionals.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>} />
             <FormField control={form.control} name="serviceId" render={({ field }) => <FormItem><FormLabel>Serviço</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{services.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>} />
+            <FormField
+              control={form.control}
+              name="professionalId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Profissional</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={!availableProfessionals.length}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma profissional" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {availableProfessionals.map((item) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {!availableProfessionals.length ? (
+                    <p className="text-sm text-muted-foreground">Nenhuma profissional ativa realiza este serviço.</p>
+                  ) : null}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField control={form.control} name="startAt" render={({ field }) => <FormItem><FormLabel>Data e hora</FormLabel><FormControl><Input type="datetime-local" {...field} /></FormControl><FormMessage /></FormItem>} />
             <Button type="submit" disabled={isPending}>Salvar agendamento</Button>
           </form>

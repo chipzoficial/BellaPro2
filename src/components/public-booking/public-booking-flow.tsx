@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator";
 type Props = {
   slug: string;
   services: Array<{ id: string; name: string }>;
-  professionals: Array<{ id: string; name: string }>;
+  professionals: Array<{ id: string; name: string; serviceIds: string[] }>;
   slots: Array<{ time: string; professionalId: string; professionalName: string }>;
 };
 
@@ -40,9 +40,16 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
 
   const watchedServiceId = form.watch("serviceId");
   const watchedDate = form.watch("date");
+  const availableProfessionals = professionals.filter((professional) => professional.serviceIds.includes(watchedServiceId));
 
   useEffect(() => {
     if (!watchedServiceId || !watchedDate) return;
+
+    const currentProfessionalId = form.getValues("professionalId");
+    if (currentProfessionalId && !availableProfessionals.some((professional) => professional.id === currentProfessionalId)) {
+      form.setValue("professionalId", "");
+      setSelectedProfessionalId("");
+    }
 
     startTransition(async () => {
       const nextSlots = await getPublicAvailability({
@@ -54,7 +61,7 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
       setAvailableSlots(nextSlots);
       form.setValue("time", "");
     });
-  }, [form, selectedProfessionalId, slug, watchedDate, watchedServiceId]);
+  }, [availableProfessionals, form, selectedProfessionalId, slug, watchedDate, watchedServiceId]);
 
   function onSubmit(values: any) {
     startTransition(async () => {
@@ -123,13 +130,16 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="any">Qualquer profissional disponível</SelectItem>
-                    {professionals.map((professional) => (
+                    {availableProfessionals.map((professional) => (
                       <SelectItem key={professional.id} value={professional.id}>
                         {professional.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {!availableProfessionals.length ? (
+                  <p className="text-sm text-muted-foreground">Nenhuma profissional ativa realiza este serviço no momento.</p>
+                ) : null}
                 <FormMessage />
               </FormItem>
             )}
