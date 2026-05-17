@@ -18,6 +18,12 @@ function formatCentsToCurrencyInput(valueInCents: number) {
   return (valueInCents / 100).toFixed(2).replace(".", ",");
 }
 
+function formatDigitsToCurrencyInput(value: string) {
+  const digits = value.replace(/\D/g, "");
+  const cents = Number(digits || "0");
+  return formatCentsToCurrencyInput(cents);
+}
+
 function parseCurrencyInputToCents(value: string) {
   const normalized = value.replace(/\./g, "").replace(",", ".").trim();
   const parsed = Number(normalized);
@@ -154,11 +160,11 @@ export function ServicosPage({
                       <FormLabel>Preço (R$)</FormLabel>
                       <FormControl>
                         <Input
-                          inputMode="decimal"
+                          inputMode="numeric"
                           placeholder="150,00"
                           {...field}
                           value={field.value ?? ""}
-                          onChange={(e) => field.onChange(e.target.value)}
+                          onChange={(e) => field.onChange(formatDigitsToCurrencyInput(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />
