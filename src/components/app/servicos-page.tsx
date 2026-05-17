@@ -14,6 +14,16 @@ import { formatMoney } from "@/lib/utils";
 import { EmptyState } from "@/components/shared/empty-state";
 import { toast } from "@/components/ui/use-toast";
 
+function formatCentsToCurrencyInput(valueInCents: number) {
+  return (valueInCents / 100).toFixed(2).replace(".", ",");
+}
+
+function parseCurrencyInputToCents(value: string) {
+  const normalized = value.replace(/\./g, "").replace(",", ".").trim();
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? Math.round(parsed * 100) : 0;
+}
+
 export function ServicosPage({
   services,
   professionals,
@@ -38,7 +48,7 @@ export function ServicosPage({
       name: "",
       description: "",
       durationMinutes: 60,
-      priceInCents: 0,
+      priceInCents: "0,00",
       isActive: true,
       professionalIds: [],
     },
@@ -46,7 +56,10 @@ export function ServicosPage({
 
   function onSubmit(values: any) {
     startTransition(async () => {
-      const result = await upsertService(values);
+      const result = await upsertService({
+        ...values,
+        priceInCents: parseCurrencyInputToCents(values.priceInCents),
+      });
       if (result.success) {
         toast.success(result.message);
       } else {
@@ -54,7 +67,7 @@ export function ServicosPage({
       }
       if (result.success) {
         setSelectedId(null);
-        form.reset({ name: "", description: "", durationMinutes: 60, priceInCents: 0, isActive: true, professionalIds: [] });
+        form.reset({ name: "", description: "", durationMinutes: 60, priceInCents: "0,00", isActive: true, professionalIds: [] });
         setOpen(false);
       }
     });
@@ -67,7 +80,7 @@ export function ServicosPage({
           type="button"
           onClick={() => {
             setSelectedId(null);
-            form.reset({ name: "", description: "", durationMinutes: 60, priceInCents: 0, isActive: true, professionalIds: [] });
+            form.reset({ name: "", description: "", durationMinutes: 60, priceInCents: "0,00", isActive: true, professionalIds: [] });
             setOpen(true);
           }}
         >
@@ -94,7 +107,7 @@ export function ServicosPage({
                       name: service.name,
                       description: service.description ?? "",
                       durationMinutes: service.durationMinutes,
-                      priceInCents: service.priceInCents,
+                      priceInCents: formatCentsToCurrencyInput(service.priceInCents),
                       isActive: service.isActive,
                       professionalIds: service.professionalServices.map((item) => item.professional.id),
                     });
@@ -133,7 +146,25 @@ export function ServicosPage({
               <FormField control={form.control} name="description" render={({ field }) => <FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>} />
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField control={form.control} name="durationMinutes" render={({ field }) => <FormItem><FormLabel>Duração (min)</FormLabel><FormControl><Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value))} /></FormControl><FormMessage /></FormItem>} />
-                <FormField control={form.control} name="priceInCents" render={({ field }) => <FormItem><FormLabel>Preço em centavos</FormLabel><FormControl><Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value))} /></FormControl><FormMessage /></FormItem>} />
+                <FormField
+                  control={form.control}
+                  name="priceInCents"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Preço (R$)</FormLabel>
+                      <FormControl>
+                        <Input
+                          inputMode="decimal"
+                          placeholder="150,00"
+                          {...field}
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
               <FormField
                 control={form.control}
