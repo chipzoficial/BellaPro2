@@ -82,7 +82,7 @@ export function AgendamentosPage({
   );
 
   return (
-    <div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
+    <div className="w-full">
       <section className="space-y-4">
         <div className="flex gap-2 overflow-auto">
           {statusFilters.map((status) => (
