@@ -168,24 +168,24 @@ export function AgendaWorkspace({
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap xl:items-center xl:justify-end">
-            <div className="inline-flex items-center gap-1 rounded-full border border-border bg-background p-1">
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="h-8 w-8 rounded-full border-border bg-white text-foreground"
+                className="h-9 w-9 rounded-xl border border-border bg-white text-foreground hover:bg-muted"
                 onClick={() => selectDay(addDays(selectedDate, -1))}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button type="button" variant="ghost" className="h-8 rounded-full px-4 text-sm" onClick={() => selectDay(today)}>
+              <Button type="button" variant="ghost" className="h-9 rounded-xl px-4 text-sm" onClick={() => selectDay(today)}>
                 Hoje
               </Button>
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="h-8 w-8 rounded-full border-border bg-white text-foreground"
+                className="h-9 w-9 rounded-xl border border-border bg-white text-foreground hover:bg-muted"
                 onClick={() => selectDay(addDays(selectedDate, 1))}
               >
                 <ChevronRight className="h-4 w-4" />
@@ -221,21 +221,21 @@ export function AgendaWorkspace({
               <p className="text-sm font-semibold text-foreground">Calendário do mês</p>
               <p className="text-xs text-muted-foreground">Toque em um dia para abrir a agenda.</p>
             </div>
-            <div className="inline-flex items-center gap-1 rounded-full border border-border bg-background p-1">
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="h-8 w-8 rounded-full border-border bg-white text-foreground"
+                className="h-9 w-9 rounded-xl border border-border bg-white text-foreground hover:bg-muted"
                 onClick={() => setMonthDate(subMonths(monthDate, 1))}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="h-8 w-8 rounded-full border-border bg-white text-foreground"
+                className="h-9 w-9 rounded-xl border border-border bg-white text-foreground hover:bg-muted"
                 onClick={() => setMonthDate(addMonths(monthDate, 1))}
               >
                 <ChevronRight className="h-4 w-4" />
@@ -248,7 +248,7 @@ export function AgendaWorkspace({
             </h2>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className="inline-block h-2 w-2 rounded-full bg-brand-500" />
-              dias com agenda
+              dia com agendamento
             </div>
           </div>
 
