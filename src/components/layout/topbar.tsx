@@ -30,7 +30,7 @@ export function Topbar({
         </Avatar>
         <form action={logoutAction}>
           <Button variant="outline" size="icon" aria-label="Sair">
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-5 w-5" />
           </Button>
         </form>
       </div>
