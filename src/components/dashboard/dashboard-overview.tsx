@@ -19,7 +19,7 @@ import { SectionHeader } from "@/components/shared/section-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { absoluteAppUrl, formatDateTime, formatMoney } from "@/lib/utils";
+import { formatDateTime, formatMoney } from "@/lib/utils";
 
 type AppointmentItem = {
   id: string;
@@ -33,6 +33,7 @@ type AppointmentItem = {
 
 export function DashboardOverview({
   data,
+  publicBaseUrl,
 }: {
   data: {
     organization: { name: string; slug: string };
@@ -70,8 +71,9 @@ export function DashboardOverview({
       };
     };
   };
+  publicBaseUrl: string;
 }) {
-  const publicUrl = absoluteAppUrl(`/${data.organization.slug}`);
+  const publicUrl = new URL(`/${data.organization.slug}`, publicBaseUrl).toString();
   const nextAppointmentLabel = data.nextAppointment
     ? `${format(data.nextAppointment.startAt, "HH:mm", { locale: ptBR })} - ${data.nextAppointment.client.name}`
     : "Sem próximos atendimentos";
