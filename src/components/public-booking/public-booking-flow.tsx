@@ -107,8 +107,12 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
 
   async function goToNextStep() {
     if (step === 1) {
-      const valid = await form.trigger(["serviceId", "professionalId"]);
-      if (!valid) return toast.error("Escolha o serviço e a profissional antes de avançar.");
+      const valid = await form.trigger(["serviceId"]);
+      if (!valid) return toast.error("Escolha o serviço antes de avançar.");
+      if (!availableProfessionals.length) {
+        toast.error("Este serviço não possui profissionais disponíveis no momento.");
+        return;
+      }
       setStep(2);
       return;
     }

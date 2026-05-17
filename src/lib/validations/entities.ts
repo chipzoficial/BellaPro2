@@ -43,7 +43,7 @@ export const appointmentSchema = z.object({
 export const publicBookingSchema = z.object({
   organizationSlug: slugSchema,
   serviceId: z.string().min(1),
-  professionalId: z.string().optional(),
+  professionalId: z.string().optional().or(z.literal("")),
   date: z.string().min(1),
   time: z.string().min(1),
   name: z.string().min(2),
