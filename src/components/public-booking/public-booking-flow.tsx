@@ -38,6 +38,7 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>("");
   const [availableSlots, setAvailableSlots] = useState(slots);
   const lastAvailabilityKeyRef = useRef("");
+  const dateInputRef = useRef<HTMLInputElement | null>(null);
   const form = useForm({
     resolver: zodResolver(publicBookingSchema),
     defaultValues: {
@@ -181,6 +182,16 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
     toast.error(firstMessage || "Revise os campos obrigatórios antes de confirmar.");
   }
 
+  function openDatePicker() {
+    const input = dateInputRef.current;
+    if (!input) return;
+
+    input.focus();
+    if ("showPicker" in input) {
+      input.showPicker();
+    }
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
@@ -311,7 +322,17 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
                     <FormItem>
                       <FormLabel>Data</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input
+                          type="date"
+                          {...field}
+                          ref={(node) => {
+                            dateInputRef.current = node;
+                            field.ref(node);
+                          }}
+                          onClick={openDatePicker}
+                          onFocus={openDatePicker}
+                          className="cursor-pointer"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -324,7 +345,7 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Horários disponíveis</FormLabel>
-                      <div className="flex min-h-[120px] flex-wrap gap-2">
+                      <div className="flex min-h-[120px] flex-wrap content-start items-start gap-2 md:min-h-[56px]">
                         {availableSlots.length ? (
                           availableSlots.map((slot) => (
                             <button
