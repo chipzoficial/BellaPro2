@@ -15,6 +15,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatDateTime } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 
+const statusFilters = [
+  { value: "all", label: "Todos" },
+  { value: AppointmentStatus.PENDING, label: "Pendente" },
+  { value: AppointmentStatus.CONFIRMED, label: "Confirmado" },
+  { value: AppointmentStatus.COMPLETED, label: "Concluído" },
+  { value: AppointmentStatus.CANCELED, label: "Cancelado" },
+  { value: AppointmentStatus.NO_SHOW, label: "Não compareceu" },
+] as const;
+
 export function AgendamentosPage({
   appointments,
   clients,
@@ -74,9 +83,9 @@ export function AgendamentosPage({
     <div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
       <section className="space-y-4">
         <div className="flex gap-2 overflow-auto">
-          {["all", ...Object.values(AppointmentStatus)].map((status) => (
-            <Button key={status} type="button" variant={statusFilter === status ? "default" : "outline"} onClick={() => setStatusFilter(status)}>
-              {status === "all" ? "Todos" : status}
+          {statusFilters.map((status) => (
+            <Button key={status.value} type="button" variant={statusFilter === status.value ? "default" : "outline"} onClick={() => setStatusFilter(status.value)}>
+              {status.label}
             </Button>
           ))}
         </div>
