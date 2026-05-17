@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { FieldErrors } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { publicBookingSchema } from "@/lib/validations/entities";
 import { createPublicBooking, getPublicAvailability } from "@/server/actions/domain";
@@ -20,7 +21,8 @@ type Props = {
 };
 
 export function PublicBookingFlow({ slug, services, professionals, slots }: Props) {
-  const [isPending, startTransition] = useTransition();
+  const [isLoadingSlots, startLoadingSlots] = useTransition();
+  const [isSubmitting, startSubmitting] = useTransition();
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>("");
   const [availableSlots, setAvailableSlots] = useState(slots);
   const form = useForm({
@@ -51,7 +53,7 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
       setSelectedProfessionalId("");
     }
 
-    startTransition(async () => {
+    startLoadingSlots(async () => {
       const nextSlots = await getPublicAvailability({
         organizationSlug: slug,
         serviceId: watchedServiceId,
@@ -75,7 +77,7 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
   }, [availableProfessionals, form, selectedProfessionalId, slug, watchedDate, watchedServiceId]);
 
   function onSubmit(values: any) {
-    startTransition(async () => {
+    startSubmitting(async () => {
       const result = await createPublicBooking(values);
       if (!result.success) {
         toast.error(result.message);
@@ -93,9 +95,17 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
     });
   }
 
+  function onInvalid(errors: FieldErrors<any>) {
+    const firstMessage = Object.values(errors)
+      .map((error) => error?.message)
+      .find((message) => typeof message === "string");
+
+    toast.error(firstMessage || "Revise os campos obrigatórios antes de confirmar.");
+  }
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-5">
         <div className="grid gap-4 md:grid-cols-2">
           <FormField
             control={form.control}
@@ -194,7 +204,9 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
                       </button>
                     ))
                   ) : (
-                    <p className="text-sm text-muted-foreground">Nenhum horário disponível para os filtros atuais.</p>
+                    <p className="text-sm text-muted-foreground">
+                      {isLoadingSlots ? "Carregando horários..." : "Nenhum horário disponível para os filtros atuais."}
+                    </p>
                   )}
                 </div>
                 <FormMessage />
@@ -263,7 +275,7 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
           />
         </div>
 
-        <Button type="submit" size="lg" disabled={isPending}>
+        <Button type="submit" size="lg" disabled={isSubmitting || isLoadingSlots}>
           Confirmar agendamento
         </Button>
       </form>
