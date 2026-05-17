@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,8 +18,10 @@ const items = [
 ];
 
 export function MobileNav() {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="outline" size="icon" className="lg:hidden">
           <Menu className="h-6 w-6" />
@@ -31,7 +34,12 @@ export function MobileNav() {
         </div>
         <nav className="space-y-2">
           {items.map((item) => (
-            <Link key={item.href} href={item.href} className="block rounded-xl px-3 py-2 text-sm font-medium text-foreground hover:bg-white">
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setOpen(false)}
+              className="block rounded-xl px-3 py-2 text-sm font-medium text-foreground hover:bg-white"
+            >
               {item.label}
             </Link>
           ))}
