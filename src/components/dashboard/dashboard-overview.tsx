@@ -19,6 +19,7 @@ import { SectionHeader } from "@/components/shared/section-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { formatDateTime, formatMoney } from "@/lib/utils";
 
 type AppointmentItem = {
@@ -80,86 +81,94 @@ export function DashboardOverview({
 
   return (
     <div className="space-y-8">
-      <section className="grid gap-6 border-b border-border pb-6 xl:grid-cols-[minmax(0,1.2fr)_360px] xl:items-start">
-        <div className="space-y-5">
-          <Badge variant="outline" className="border-brand-200 bg-brand-50 text-brand-700">
-            Ritmo do dia
-          </Badge>
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="font-heading text-3xl leading-tight text-foreground">
-                  {data.nextAppointment ? "Próximo atendimento" : "Painel do salão pronto para agir"}
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_360px]">
+        <Card className="bg-white/90">
+          <CardContent className="p-6 md:p-7">
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <Badge variant="outline" className="border-brand-200 bg-brand-50 text-brand-700">
+                    Ritmo do dia
+                  </Badge>
+                  <h2 className="mt-4 font-heading text-3xl leading-tight text-foreground">
+                    {data.nextAppointment ? "Próximo atendimento" : "Painel do salão pronto para agir"}
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                    {data.nextAppointment
+                      ? `${nextAppointmentLabel} com ${data.nextAppointment.professional.name}. Use o painel para confirmar, encaixar ou antecipar a próxima movimentação do dia.`
+                      : "Sem agendamento futuro neste momento. Aproveite para organizar a agenda, revisar pendências e divulgar o link público."}
+                  </p>
+                </div>
+                {data.nextAppointment ? <StatusBadge status={data.nextAppointment.status} /> : null}
+              </div>
+
+              <div className="grid gap-4 border-t border-border pt-5 sm:grid-cols-2 xl:grid-cols-4">
+                <QuickStat
+                  icon={CalendarClock}
+                  label="Atendimentos hoje"
+                  value={String(data.metrics.today.appointmentsCount)}
+                  helper={`${data.metrics.today.pendingCount} pendente${data.metrics.today.pendingCount === 1 ? "" : "s"}`}
+                />
+                <QuickStat
+                  icon={Users}
+                  label="Profissionais livres"
+                  value={String(data.metrics.today.freeProfessionalsNow)}
+                  helper={`${data.metrics.today.activeNowCount} em atendimento agora`}
+                />
+                <QuickStat
+                  icon={CircleDollarSign}
+                  label="Ticket médio"
+                  value={formatMoney(data.metrics.month.ticketAverage)}
+                  helper="Somente atendimentos concluídos"
+                />
+                <QuickStat
+                  icon={Scissors}
+                  label="Concluídos no mês"
+                  value={String(data.metrics.month.completedCount)}
+                  helper={data.metrics.month.busiestDayLabel}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white/90">
+          <CardContent className="p-6">
+            <div className="space-y-5">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Atalho rápido</p>
+                <h3 className="text-xl font-semibold text-foreground">
+                  {data.nextAppointment ? data.nextAppointment.client.name : data.organization.name}
+                </h3>
+                <p className="text-sm text-muted-foreground">
                   {data.nextAppointment
-                    ? `${nextAppointmentLabel} com ${data.nextAppointment.professional.name}. Use o painel para confirmar, encaixar ou antecipar a próxima movimentação do dia.`
-                    : "Sem agendamento futuro neste momento. Aproveite para organizar a agenda, revisar pendências e divulgar o link público."}
+                    ? `${data.nextAppointment.service.name} com ${data.nextAppointment.professional.name}`
+                    : "Agenda vazia no momento. Crie um atendimento ou abra o link público."}
                 </p>
               </div>
-              {data.nextAppointment ? <StatusBadge status={data.nextAppointment.status} /> : null}
+
+              <div className="space-y-2">
+                <InfoRow
+                  icon={Clock3}
+                  label="Próximo horário"
+                  value={data.nextAppointment ? formatDateTime(data.nextAppointment.startAt) : "Sem horário marcado"}
+                />
+                <InfoRow
+                  icon={CalendarDays}
+                  label="Link público"
+                  value={publicUrl.replace(/^https?:\/\//, "")}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <QuickAction href="/app/agenda" icon={CalendarClock} label="Abrir agenda" />
+                <QuickAction href="/app/agendamentos?novo=1" icon={Plus} label="Novo agendamento" />
+                <QuickAction href="/app/clientes" icon={Users} label="Novo cliente" />
+                <QuickAction href={`/${data.organization.slug}`} icon={ArrowRight} label="Abrir agenda pública" external />
+              </div>
             </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <QuickStat
-              icon={CalendarClock}
-              label="Atendimentos hoje"
-              value={String(data.metrics.today.appointmentsCount)}
-              helper={`${data.metrics.today.pendingCount} pendente${data.metrics.today.pendingCount === 1 ? "" : "s"}`}
-            />
-            <QuickStat
-              icon={Users}
-              label="Profissionais livres"
-              value={String(data.metrics.today.freeProfessionalsNow)}
-              helper={`${data.metrics.today.activeNowCount} em atendimento agora`}
-            />
-            <QuickStat
-              icon={CircleDollarSign}
-              label="Ticket médio"
-              value={formatMoney(data.metrics.month.ticketAverage)}
-              helper="Somente atendimentos concluídos"
-            />
-            <QuickStat
-              icon={Scissors}
-              label="Concluídos no mês"
-              value={String(data.metrics.month.completedCount)}
-              helper={data.metrics.month.busiestDayLabel}
-            />
-          </div>
-        </div>
-
-        <aside className="space-y-4 xl:border-l xl:border-border xl:pl-6">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-muted-foreground">Atalho rápido</p>
-            <h3 className="text-xl font-semibold text-foreground">
-              {data.nextAppointment ? data.nextAppointment.client.name : data.organization.name}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {data.nextAppointment
-                ? `${data.nextAppointment.service.name} com ${data.nextAppointment.professional.name}`
-                : "Agenda vazia no momento. Crie um atendimento ou abra o link público."}
-            </p>
-          </div>
-
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Clock3 className="h-4 w-4 text-brand-700" />
-              <span>{data.nextAppointment ? formatDateTime(data.nextAppointment.startAt) : "Sem horário marcado"}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-brand-700" />
-              <span>Link público: {publicUrl.replace(/^https?:\/\//, "")}</span>
-            </div>
-          </div>
-
-          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-            <QuickAction href="/app/agenda" icon={CalendarClock} label="Abrir agenda" />
-            <QuickAction href="/app/agendamentos?novo=1" icon={Plus} label="Novo agendamento" />
-            <QuickAction href="/app/clientes" icon={Users} label="Novo cliente" />
-            <QuickAction href={`/${data.organization.slug}`} icon={ArrowRight} label="Abrir agenda pública" external />
-          </div>
-        </aside>
+          </CardContent>
+        </Card>
       </section>
 
       <section className="space-y-4">
@@ -252,12 +261,34 @@ function QuickAction({
   external?: boolean;
 }) {
   return (
-    <Button asChild variant="ghost" className="h-auto justify-start rounded-2xl border border-border px-4 py-3 text-left">
+    <Button asChild variant="ghost" className="h-auto justify-start rounded-2xl border border-border bg-background px-4 py-3 text-left">
       <Link href={href} {...(external ? { target: "_blank", rel: "noreferrer" } : {})}>
         <Icon className="h-4 w-4 text-brand-700" />
         <span>{label}</span>
       </Link>
     </Button>
+  );
+}
+
+function InfoRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Clock3;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-[#fffaf9] px-4 py-3">
+      <div className="flex items-start gap-3">
+        <Icon className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" />
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+          <p className="mt-1 break-all text-sm text-foreground">{value}</p>
+        </div>
+      </div>
+    </div>
   );
 }
 
