@@ -3,19 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { navigationItems } from "@/components/layout/navigation-items";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-
-const items = [
-  { href: "/app", label: "Dashboard" },
-  { href: "/app/agenda", label: "Agenda" },
-  { href: "/app/agendamentos", label: "Agendamentos" },
-  { href: "/app/clientes", label: "Clientes" },
-  { href: "/app/profissionais", label: "Profissionais" },
-  { href: "/app/servicos", label: "Serviços" },
-  { href: "/app/financeiro", label: "Financeiro" },
-  { href: "/app/configuracoes", label: "Configurações" },
-];
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
@@ -32,17 +23,24 @@ export function MobileNav() {
           <p className="font-heading text-3xl font-semibold text-brand-800">BellaPro</p>
           <p className="mt-2 text-sm text-muted-foreground">Seu salão, sua agenda, seu controle.</p>
         </div>
-        <nav className="space-y-2">
-          {items.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setOpen(false)}
-              className="block rounded-xl px-3 py-2 text-sm font-medium text-foreground hover:bg-white"
-            >
-              {item.label}
-            </Link>
-          ))}
+        <nav className="space-y-1">
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-white hover:text-foreground"
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
         </nav>
       </SheetContent>
     </Sheet>

@@ -1,17 +1,6 @@
 import Link from "next/link";
-import { CalendarClock, LayoutDashboard, Settings, Users, Wallet, BriefcaseBusiness, Scissors } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const navigation = [
-  { href: "/app", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/app/agenda", label: "Agenda", icon: CalendarClock },
-  { href: "/app/agendamentos", label: "Agendamentos", icon: CalendarClock },
-  { href: "/app/clientes", label: "Clientes", icon: Users },
-  { href: "/app/profissionais", label: "Profissionais", icon: BriefcaseBusiness },
-  { href: "/app/servicos", label: "Serviços", icon: Scissors },
-  { href: "/app/financeiro", label: "Financeiro", icon: Wallet },
-  { href: "/app/configuracoes", label: "Configurações", icon: Settings },
-];
+import { navigationItems } from "@/components/layout/navigation-items";
 
 export function Sidebar({ pathname }: { pathname: string }) {
   return (
@@ -21,7 +10,7 @@ export function Sidebar({ pathname }: { pathname: string }) {
         <p className="mt-2 text-sm text-muted-foreground">Gestão e agendamento para salões de beleza.</p>
       </div>
       <nav className="space-y-1">
-        {navigation.map((item) => {
+        {navigationItems.map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href;
           return (
