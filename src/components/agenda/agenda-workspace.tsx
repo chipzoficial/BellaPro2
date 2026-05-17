@@ -215,7 +215,7 @@ export function AgendaWorkspace({
               </SelectContent>
             </Select>
             <Button asChild className="rounded-full">
-              <Link href="/app/agendamentos">
+              <Link href="/app/agendamentos?novo=1">
                 <CalendarPlus className="h-4 w-4" />
                 Novo agendamento
               </Link>

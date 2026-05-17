@@ -19,7 +19,6 @@ import { SectionHeader } from "@/components/shared/section-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { absoluteAppUrl, formatDateTime, formatMoney } from "@/lib/utils";
 
 type AppointmentItem = {
@@ -79,86 +78,86 @@ export function DashboardOverview({
 
   return (
     <div className="space-y-8">
-      <section className="overflow-hidden rounded-[28px] border border-border bg-white/90">
-        <div className="grid gap-6 px-6 py-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] lg:px-8">
-          <div className="space-y-4">
-            <Badge variant="outline" className="border-brand-200 bg-brand-50 text-brand-700">
-              Ritmo do dia
-            </Badge>
-            <div className="space-y-2">
-              <h2 className="font-heading text-3xl leading-tight text-foreground">
-                {data.nextAppointment ? "Próximo atendimento" : "Painel do salão pronto para agir"}
-              </h2>
-              <p className="max-w-2xl text-sm text-muted-foreground">
-                {data.nextAppointment
-                  ? `${nextAppointmentLabel} com ${data.nextAppointment.professional.name}. Use o painel para confirmar, encaixar ou antecipar a próxima movimentação do dia.`
-                  : "Sem agendamento futuro neste momento. Aproveite para organizar a agenda, revisar pendências e divulgar o link público."}
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <QuickStat
-                icon={CalendarClock}
-                label="Atendimentos hoje"
-                value={String(data.metrics.today.appointmentsCount)}
-                helper={`${data.metrics.today.pendingCount} pendente${data.metrics.today.pendingCount === 1 ? "" : "s"}`}
-              />
-              <QuickStat
-                icon={Users}
-                label="Profissionais livres"
-                value={String(data.metrics.today.freeProfessionalsNow)}
-                helper={`${data.metrics.today.activeNowCount} em atendimento agora`}
-              />
-              <QuickStat
-                icon={CircleDollarSign}
-                label="Ticket médio"
-                value={formatMoney(data.metrics.month.ticketAverage)}
-                helper="Somente atendimentos concluídos"
-              />
-              <QuickStat
-                icon={Scissors}
-                label="Concluídos no mês"
-                value={String(data.metrics.month.completedCount)}
-                helper={data.metrics.month.busiestDayLabel}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-4 rounded-[24px] border border-border bg-[#fff8f7] p-5">
-            <div className="flex items-start justify-between gap-4">
+      <section className="grid gap-6 border-b border-border pb-6 xl:grid-cols-[minmax(0,1.2fr)_360px] xl:items-start">
+        <div className="space-y-5">
+          <Badge variant="outline" className="border-brand-200 bg-brand-50 text-brand-700">
+            Ritmo do dia
+          </Badge>
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Atalho rápido</p>
-                <h3 className="mt-1 text-xl font-semibold text-foreground">
-                  {data.nextAppointment ? data.nextAppointment.client.name : data.organization.name}
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <h2 className="font-heading text-3xl leading-tight text-foreground">
+                  {data.nextAppointment ? "Próximo atendimento" : "Painel do salão pronto para agir"}
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                   {data.nextAppointment
-                    ? `${data.nextAppointment.service.name} com ${data.nextAppointment.professional.name}`
-                    : "Agenda vazia no momento. Crie um atendimento ou abra o link público."}
+                    ? `${nextAppointmentLabel} com ${data.nextAppointment.professional.name}. Use o painel para confirmar, encaixar ou antecipar a próxima movimentação do dia.`
+                    : "Sem agendamento futuro neste momento. Aproveite para organizar a agenda, revisar pendências e divulgar o link público."}
                 </p>
               </div>
               {data.nextAppointment ? <StatusBadge status={data.nextAppointment.status} /> : null}
             </div>
+          </div>
 
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Clock3 className="h-4 w-4 text-brand-700" />
-                <span>{data.nextAppointment ? formatDateTime(data.nextAppointment.startAt) : "Sem horário marcado"}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4 text-brand-700" />
-                <span>Link público: {publicUrl.replace(/^https?:\/\//, "")}</span>
-              </div>
-            </div>
-
-            <div className="grid gap-2 sm:grid-cols-2">
-              <QuickAction href="/app/agenda" icon={CalendarClock} label="Abrir agenda" />
-              <QuickAction href="/app/agendamentos" icon={Plus} label="Novo agendamento" />
-              <QuickAction href="/app/clientes" icon={Users} label="Novo cliente" />
-              <QuickAction href={`/${data.organization.slug}`} icon={ArrowRight} label="Abrir agenda pública" external />
-            </div>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <QuickStat
+              icon={CalendarClock}
+              label="Atendimentos hoje"
+              value={String(data.metrics.today.appointmentsCount)}
+              helper={`${data.metrics.today.pendingCount} pendente${data.metrics.today.pendingCount === 1 ? "" : "s"}`}
+            />
+            <QuickStat
+              icon={Users}
+              label="Profissionais livres"
+              value={String(data.metrics.today.freeProfessionalsNow)}
+              helper={`${data.metrics.today.activeNowCount} em atendimento agora`}
+            />
+            <QuickStat
+              icon={CircleDollarSign}
+              label="Ticket médio"
+              value={formatMoney(data.metrics.month.ticketAverage)}
+              helper="Somente atendimentos concluídos"
+            />
+            <QuickStat
+              icon={Scissors}
+              label="Concluídos no mês"
+              value={String(data.metrics.month.completedCount)}
+              helper={data.metrics.month.busiestDayLabel}
+            />
           </div>
         </div>
+
+        <aside className="space-y-4 xl:border-l xl:border-border xl:pl-6">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">Atalho rápido</p>
+            <h3 className="text-xl font-semibold text-foreground">
+              {data.nextAppointment ? data.nextAppointment.client.name : data.organization.name}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {data.nextAppointment
+                ? `${data.nextAppointment.service.name} com ${data.nextAppointment.professional.name}`
+                : "Agenda vazia no momento. Crie um atendimento ou abra o link público."}
+            </p>
+          </div>
+
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Clock3 className="h-4 w-4 text-brand-700" />
+              <span>{data.nextAppointment ? formatDateTime(data.nextAppointment.startAt) : "Sem horário marcado"}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-brand-700" />
+              <span>Link público: {publicUrl.replace(/^https?:\/\//, "")}</span>
+            </div>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+            <QuickAction href="/app/agenda" icon={CalendarClock} label="Abrir agenda" />
+            <QuickAction href="/app/agendamentos?novo=1" icon={Plus} label="Novo agendamento" />
+            <QuickAction href="/app/clientes" icon={Users} label="Novo cliente" />
+            <QuickAction href={`/${data.organization.slug}`} icon={ArrowRight} label="Abrir agenda pública" external />
+          </div>
+        </aside>
       </section>
 
       <section className="space-y-4">
@@ -228,7 +227,7 @@ function QuickStat({
   helper: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-white px-4 py-4">
+    <div className="border-l border-border pl-4">
       <div className="flex items-center gap-2 text-muted-foreground">
         <Icon className="h-4 w-4 text-brand-700" />
         <span className="text-xs font-medium uppercase tracking-[0.16em]">{label}</span>
@@ -251,7 +250,7 @@ function QuickAction({
   external?: boolean;
 }) {
   return (
-    <Button asChild variant="outline" className="h-auto justify-start rounded-2xl px-4 py-3 text-left">
+    <Button asChild variant="ghost" className="h-auto justify-start rounded-2xl border border-border px-4 py-3 text-left">
       <Link href={href} {...(external ? { target: "_blank", rel: "noreferrer" } : {})}>
         <Icon className="h-4 w-4 text-brand-700" />
         <span>{label}</span>
@@ -297,22 +296,20 @@ function UpcomingList({ items }: { items: AppointmentItem[] }) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="overflow-hidden rounded-[24px] border border-border bg-white">
       {items.map((item) => (
-        <Card key={item.id} className="bg-white">
-          <CardContent className="flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-medium text-foreground">{item.client.name}</p>
-                <span className="text-xs text-muted-foreground">{formatDateTime(item.startAt)}</span>
-              </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {item.service.name} com {item.professional.name}
-              </p>
+        <div key={item.id} className="flex flex-col gap-3 border-b border-border px-5 py-4 last:border-b-0 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-medium text-foreground">{item.client.name}</p>
+              <span className="text-xs text-muted-foreground">{formatDateTime(item.startAt)}</span>
             </div>
-            <StatusBadge status={item.status} />
-          </CardContent>
-        </Card>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {item.service.name} com {item.professional.name}
+            </p>
+          </div>
+          <StatusBadge status={item.status} />
+        </div>
       ))}
     </div>
   );

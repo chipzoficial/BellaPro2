@@ -26,11 +26,13 @@ const statusFilters = [
 ] as const;
 
 export function AgendamentosPage({
+  initialOpen = false,
   appointments,
   clients,
   professionals,
   services,
 }: {
+  initialOpen?: boolean;
   appointments: Array<any>;
   clients: Array<{ id: string; name: string }>;
   professionals: Array<{ id: string; name: string }>;
@@ -55,6 +57,24 @@ export function AgendamentosPage({
     },
   });
   const watchedServiceId = form.watch("serviceId");
+
+  function resetForNewAppointment() {
+    form.reset({
+      clientId: clients[0]?.id ?? "",
+      professionalId: professionals[0]?.id ?? "",
+      serviceId: services[0]?.id ?? "",
+      startAt: "",
+      status: AppointmentStatus.CONFIRMED,
+      notes: "",
+    });
+  }
+
+  useEffect(() => {
+    if (!initialOpen) return;
+
+    resetForNewAppointment();
+    setOpen(true);
+  }, [initialOpen]);
 
   const availableProfessionals = useMemo(() => {
     const selectedService = services.find((service) => service.id === watchedServiceId);
@@ -94,14 +114,7 @@ export function AgendamentosPage({
             type="button"
             className="ml-auto"
             onClick={() => {
-              form.reset({
-                clientId: clients[0]?.id ?? "",
-                professionalId: professionals[0]?.id ?? "",
-                serviceId: services[0]?.id ?? "",
-                startAt: "",
-                status: AppointmentStatus.CONFIRMED,
-                notes: "",
-              });
+              resetForNewAppointment();
               setOpen(true);
             }}
           >
