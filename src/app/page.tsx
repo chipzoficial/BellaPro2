@@ -27,9 +27,6 @@ export default function LoginPage() {
                 <p className="mt-2 text-sm text-muted-foreground">Acesse o painel do seu salão. A raiz do domínio é o login do BellaPro.</p>
               </div>
               <LoginForm />
-              <p className="mt-8 text-sm text-muted-foreground">
-                Novo por aqui? <Link href="/criar-conta" className="font-medium text-primary hover:underline">Crie sua conta</Link>
-              </p>
             </CardContent>
           </Card>
         </div>
