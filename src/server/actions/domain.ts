@@ -609,3 +609,24 @@ export async function getPublicAvailability(input: {
     date: buildStartDate(input.date, "00:00"),
   });
 }
+
+export async function getAppointmentAvailability(input: {
+  serviceId: string;
+  professionalId?: string;
+  date: string;
+  currentAppointmentId?: string;
+}) {
+  const membership = await requireScope("appointments");
+
+  if (!input.serviceId || !input.date) {
+    return [];
+  }
+
+  return getAvailableSlots({
+    organizationId: membership.organizationId,
+    serviceId: input.serviceId,
+    professionalId: input.professionalId || undefined,
+    date: buildStartDate(input.date, "00:00"),
+    currentAppointmentId: input.currentAppointmentId,
+  });
+}

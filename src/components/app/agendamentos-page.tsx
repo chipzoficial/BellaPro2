@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AppointmentStatus } from "@prisma/client";
+import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { appointmentSchema } from "@/lib/validations/entities";
-import { upsertAppointment, updateAppointmentStatus } from "@/server/actions/domain";
+import { getAppointmentAvailability, upsertAppointment, updateAppointmentStatus } from "@/server/actions/domain";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -46,7 +47,13 @@ export function AgendamentosPage({
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [open, setOpen] = useState(false);
   const [clientMode, setClientMode] = useState<"existing" | "new">("existing");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [availableSlots, setAvailableSlots] = useState<Array<{ time: string; professionalId: string; professionalName: string }>>([]);
+  const [isLoadingSlots, startLoadingSlots] = useTransition();
   const [isPending, startTransition] = useTransition();
+  const dateInputRef = useRef<HTMLInputElement | null>(null);
+  const lastAvailabilityKeyRef = useRef("");
   const form = useForm<any>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
@@ -63,9 +70,15 @@ export function AgendamentosPage({
   });
   const watchedServiceId = form.watch("serviceId");
   const watchedClientName = form.watch("clientName");
+  const watchedProfessionalId = form.watch("professionalId");
+  const watchedAppointmentId = form.watch("id");
 
   function resetForNewAppointment() {
     setClientMode("existing");
+    setSelectedDate("");
+    setSelectedTime("");
+    setAvailableSlots([]);
+    lastAvailabilityKeyRef.current = "";
     form.reset({
       clientMode: "existing",
       clientId: "",
@@ -105,6 +118,36 @@ export function AgendamentosPage({
       });
     }
   }, [availableProfessionals, form]);
+
+  useEffect(() => {
+    if (!open || !watchedServiceId || !selectedDate) return;
+
+    const availabilityKey = [watchedAppointmentId || "new", watchedServiceId, watchedProfessionalId || "any", selectedDate].join(":");
+    if (lastAvailabilityKeyRef.current === availabilityKey) return;
+    lastAvailabilityKeyRef.current = availabilityKey;
+
+    startLoadingSlots(async () => {
+      const nextSlots = await getAppointmentAvailability({
+        serviceId: watchedServiceId,
+        professionalId: watchedProfessionalId || undefined,
+        date: selectedDate,
+        currentAppointmentId: watchedAppointmentId || undefined,
+      });
+
+      setAvailableSlots(nextSlots);
+
+      const stillAvailable = nextSlots.some(
+        (slot) =>
+          slot.time === selectedTime &&
+          (!watchedProfessionalId || slot.professionalId === watchedProfessionalId)
+      );
+
+      if (!stillAvailable) {
+        setSelectedTime("");
+        form.setValue("startAt", "", { shouldValidate: true });
+      }
+    });
+  }, [form, open, selectedDate, selectedTime, watchedAppointmentId, watchedProfessionalId, watchedServiceId]);
 
   const filtered = useMemo(
     () => appointments.filter((item) => (statusFilter === "all" ? true : item.status === statusFilter)),
@@ -162,6 +205,12 @@ export function AgendamentosPage({
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="ghost" onClick={() => {
+                      const appointmentDate = new Date(item.startAt);
+                      const nextDate = format(appointmentDate, "yyyy-MM-dd");
+                      const nextTime = format(appointmentDate, "HH:mm");
+                      setSelectedDate(nextDate);
+                      setSelectedTime(nextTime);
+                      lastAvailabilityKeyRef.current = "";
                       setClientMode("existing");
                       form.reset({
                         id: item.id,
@@ -171,7 +220,7 @@ export function AgendamentosPage({
                         clientPhone: item.client.phone ?? "",
                         professionalId: item.professionalId,
                         serviceId: item.serviceId,
-                        startAt: new Date(item.startAt).toISOString().slice(0, 16),
+                        startAt: new Date(item.startAt).toISOString(),
                         status: item.status,
                         notes: item.notes ?? "",
                       });
@@ -206,7 +255,7 @@ export function AgendamentosPage({
               const result = await upsertAppointment({
                 ...values,
                 clientMode,
-                startAt: new Date(values.startAt).toISOString(),
+                startAt: values.startAt,
               });
               if (result.success) {
                 toast.success(result.message);
@@ -371,7 +420,71 @@ export function AgendamentosPage({
                   </FormItem>
                 )}
               />
-              <FormField control={form.control} name="startAt" render={({ field }) => <FormItem><FormLabel>Data e hora</FormLabel><FormControl><Input type="datetime-local" {...field} /></FormControl><FormMessage /></FormItem>} />
+              <div className="grid gap-4 md:grid-cols-[220px_1fr]">
+                <FormItem>
+                  <FormLabel>Data</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      value={selectedDate}
+                      ref={dateInputRef}
+                      onChange={(event) => {
+                        setSelectedDate(event.target.value);
+                        setSelectedTime("");
+                        lastAvailabilityKeyRef.current = "";
+                        form.setValue("startAt", "", { shouldValidate: true });
+                      }}
+                      onClick={() => {
+                        const input = dateInputRef.current;
+                        if (input && "showPicker" in input) {
+                          input.showPicker();
+                        }
+                      }}
+                    />
+                  </FormControl>
+                </FormItem>
+                <FormField
+                  control={form.control}
+                  name="startAt"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Horários disponíveis</FormLabel>
+                      <div className="flex min-h-[56px] flex-wrap content-start items-start gap-2">
+                        {availableSlots.length ? (
+                          availableSlots.map((slot) => (
+                            <button
+                              key={`${slot.professionalId}-${slot.time}`}
+                              type="button"
+                              onClick={() => {
+                                setSelectedTime(slot.time);
+                                form.setValue("professionalId", slot.professionalId, { shouldValidate: true });
+                                field.onChange(new Date(`${selectedDate}T${slot.time}:00`).toISOString());
+                              }}
+                              className={cn(
+                                "rounded-full border px-3 py-2 text-sm transition-colors",
+                                selectedTime === slot.time
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "border-border bg-background hover:bg-muted"
+                              )}
+                            >
+                              {slot.time}
+                            </button>
+                          ))
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            {selectedDate
+                              ? isLoadingSlots
+                                ? "Carregando horários..."
+                                : "Nenhum horário disponível para esta data."
+                              : "Escolha uma data para ver os horários."}
+                          </p>
+                        )}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <div className="flex gap-2">
                 <Button type="submit" disabled={isPending}>Salvar agendamento</Button>
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
