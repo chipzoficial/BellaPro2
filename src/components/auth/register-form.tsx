@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import type { FormEvent } from "react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
@@ -168,9 +169,20 @@ export function RegisterForm() {
     });
   }
 
+  async function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (step < onboardingSteps.length - 1) {
+      await goToNextStep();
+      return;
+    }
+
+    void form.handleSubmit(onSubmit)(event);
+  }
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleFormSubmit} className="space-y-8">
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4 rounded-[22px] border border-border bg-white px-4 py-4 md:hidden">
             <div>
