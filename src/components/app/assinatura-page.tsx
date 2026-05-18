@@ -64,6 +64,11 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
   const isTrialing = overview.currentSubscription?.status === SubscriptionStatus.TRIALING;
   const currentPlanId = !isTrialing ? overview.currentSubscription?.plan.id ?? null : null;
   const canOpenPortal = Boolean(overview.organization.stripeCustomerId);
+  const heroTitle = overview.currentSubscription
+    ? isTrialing
+      ? "Teste grátis em andamento"
+      : overview.currentSubscription.plan.name
+    : "Escolha um plano para cobrar seus salões";
   const nextBillingText = useMemo(() => {
     if (!overview.currentSubscription) return "Ainda não existe assinatura ativa.";
     if (overview.currentSubscription.cancelAtPeriodEnd) {
@@ -129,13 +134,7 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
               <Badge variant={overview.currentSubscription ? statusVariantMap[overview.currentSubscription.status] : "outline"}>
                 {overview.currentSubscription ? statusLabelMap[overview.currentSubscription.status] : "Sem assinatura ativa"}
               </Badge>
-              <h2 className="mt-4 font-heading text-3xl text-foreground">
-                {overview.currentSubscription
-                  ? isTrialing
-                    ? "Período de teste"
-                    : overview.currentSubscription.plan.name
-                  : "Escolha um plano para cobrar seus salões"}
-              </h2>
+              <h2 className="mt-4 font-heading text-3xl text-foreground">{heroTitle}</h2>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                 {overview.currentSubscription
                   ? isTrialing
@@ -159,7 +158,13 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
             <SummaryTile
               icon={CreditCard}
               label="Status"
-              value={overview.currentSubscription ? statusLabelMap[overview.currentSubscription.status] : "Sem assinatura"}
+              value={
+                overview.currentSubscription
+                  ? isTrialing
+                    ? "Teste ativo"
+                    : statusLabelMap[overview.currentSubscription.status]
+                  : "Sem assinatura"
+              }
               helper={nextBillingText}
             />
             <SummaryTile
