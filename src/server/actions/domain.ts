@@ -5,6 +5,7 @@ import { addMinutes } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
+import { enforceAppointmentLimit, enforceProfessionalLimit } from "@/lib/billing";
 import { db } from "@/lib/db";
 import { canAccess } from "@/lib/permissions";
 import { getAvailableSlots, buildStartDate } from "@/lib/availability";
@@ -103,6 +104,23 @@ export async function upsertProfessional(input: unknown): Promise<ActionState> {
     if (!parsed.success) return fail("Dados inválidos.", parsed.error.flatten().fieldErrors);
     const data = parsed.data;
 
+    const existingProfessional = data.id
+      ? await db.professional.findFirst({
+          where: { id: data.id, organizationId: membership.organizationId },
+          select: { id: true, isActive: true },
+        })
+      : null;
+
+    if (!data.id || data.isActive) {
+      const shouldCheckLimit = !existingProfessional || !existingProfessional.isActive || !data.id;
+      if (shouldCheckLimit) {
+        await enforceProfessionalLimit({
+          organizationId: membership.organizationId,
+          currentProfessionalId: data.id,
+        });
+      }
+    }
+
     const professional = data.id
       ? await db.professional.update({
           where: { id: data.id, organizationId: membership.organizationId },
@@ -150,6 +168,12 @@ export async function toggleProfessionalStatus(id: string): Promise<ActionState>
       where: { id, organizationId: membership.organizationId },
     });
     if (!professional) return fail("Profissional não encontrado.");
+    if (!professional.isActive) {
+      await enforceProfessionalLimit({
+        organizationId: membership.organizationId,
+        currentProfessionalId: professional.id,
+      });
+    }
     await db.professional.update({
       where: { id },
       data: { isActive: !professional.isActive },
@@ -252,6 +276,12 @@ export async function upsertAppointment(input: unknown): Promise<ActionState> {
 
     const startAt = new Date(data.startAt);
     if (startAt < new Date()) return fail("Não é possível agendar no passado.");
+
+    await enforceAppointmentLimit({
+      organizationId: membership.organizationId,
+      startAt,
+      currentAppointmentId: data.id,
+    });
 
     const endAt = addMinutes(startAt, service.durationMinutes);
     const conflict = await db.appointment.findFirst({
@@ -430,6 +460,10 @@ export async function createPublicBooking(input: unknown): Promise<ActionState> 
     if (!organization || !organization.isActive) return fail("Salão indisponível no momento.");
 
     const startAt = buildStartDate(data.date, data.time);
+    await enforceAppointmentLimit({
+      organizationId: organization.id,
+      startAt,
+    });
     const slots = await getAvailableSlots({
       organizationId: organization.id,
       serviceId: data.serviceId,
