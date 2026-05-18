@@ -54,11 +54,13 @@ export async function getAvailableSlots({
   serviceId,
   professionalId,
   date,
+  currentAppointmentId,
 }: {
   organizationId: string;
   serviceId: string;
   professionalId?: string;
   date: Date;
+  currentAppointmentId?: string;
 }) {
   const service = await db.service.findFirst({
     where: {
@@ -95,6 +97,7 @@ export async function getAvailableSlots({
       },
       appointments: {
         where: {
+          ...(currentAppointmentId ? { id: { not: currentAppointmentId } } : {}),
           startAt: {
             gte: date,
             lte: endOfDay(date),
