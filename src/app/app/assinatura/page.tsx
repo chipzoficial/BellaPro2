@@ -12,7 +12,7 @@ export default async function AssinaturaRoute() {
     <div className="space-y-8">
       <PageHeader
         title="Assinatura"
-        description="Gerencie o plano do BellaPro, a cobrança recorrente e o portal da Stripe."
+        description="Acompanhe seu plano e os detalhes da cobrança."
       />
       <AssinaturaPage overview={overview} />
     </div>

@@ -27,17 +27,17 @@ const onboardingSteps = [
   {
     id: "conta",
     title: "Conta",
-    description: "Seus dados de acesso ao BellaPro.",
+    description: "Seus dados de acesso.",
   },
   {
     id: "salao",
     title: "Salão",
-    description: "Identidade básica e dados de operação do salão.",
+    description: "Informações principais do salão.",
   },
   {
     id: "servicos",
     title: "Serviços",
-    description: "Escolha os atendimentos iniciais para montar a agenda.",
+    description: "Escolha os serviços que já deseja cadastrar.",
   },
   {
     id: "profissionais",
@@ -308,7 +308,7 @@ export function RegisterForm() {
             ) : (
               <Button type="submit" disabled={isPending || !reviewConfirmed}>
                 <Sparkles className="h-4 w-4" />
-                {isPending ? "Criando sua conta..." : "Confirmar e começar teste grátis"}
+                {isPending ? "Criando sua conta..." : "Criar conta"}
               </Button>
             )}
           </div>
@@ -324,7 +324,7 @@ function AccountStep({ form }: { form: ReturnType<typeof useForm<RegisterInput>>
       <div>
         <h2 className="font-heading text-4xl font-semibold text-brand-800">Passo 1: Sua conta</h2>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Informe os dados do owner que vai administrar o salão e acessar o BellaPro durante os 14 dias de teste.
+          Informe os dados da conta principal do salão.
         </p>
       </div>
 
@@ -364,7 +364,7 @@ function SalonStep({
           name="slug"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Slug público</FormLabel>
+              <FormLabel>Endereço da página</FormLabel>
               <FormControl>
                 <Input
                   placeholder="salao-da-leh"
@@ -376,7 +376,7 @@ function SalonStep({
                   }}
                 />
               </FormControl>
-              <p className="text-xs text-muted-foreground">Link público: /{slug || "seu-slug"}</p>
+              <p className="text-xs text-muted-foreground">Sua página ficará em /{slug || "seu-link"}</p>
               <FormMessage />
             </FormItem>
           )}
@@ -676,7 +676,7 @@ function ReviewStep({
           <Check className="h-3.5 w-3.5" />
         </span>
         <div>
-          <p className="text-sm font-medium text-foreground">Revisei os dados e quero criar a conta agora</p>
+          <p className="text-sm font-medium text-foreground">Confirmo os dados para criar a conta</p>
           <p className="mt-1 text-sm text-muted-foreground">
             O teste grátis de 14 dias começa assim que a conta for criada.
           </p>

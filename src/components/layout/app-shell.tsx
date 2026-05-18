@@ -71,7 +71,7 @@ function TrialBanner({
                 : "Teste grátis ativo."}
             </p>
             <p className="text-xs text-muted-foreground">
-              Vigente até {formatDateTime(notice.currentPeriodEnd, "dd/MM/yyyy")}. Escolha um plano quando quiser seguir com a cobrança.
+              Vigente até {formatDateTime(notice.currentPeriodEnd, "dd/MM/yyyy")}. Você pode escolher um plano a qualquer momento.
             </p>
           </div>
         </div>

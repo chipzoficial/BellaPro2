@@ -8,8 +8,8 @@ export default async function SelecionarSalaoPage() {
   return (
     <main className="min-h-screen bg-[#fbf6f5] px-4 py-10">
       <div className="container max-w-3xl">
-        <h1 className="font-heading text-5xl font-semibold text-brand-800">Escolha o salão</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Sua conta está vinculada a mais de uma organização. Selecione onde deseja trabalhar agora.</p>
+        <h1 className="font-heading text-5xl font-semibold text-brand-800">Selecione o salão</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Escolha em qual salão deseja entrar agora.</p>
         <div className="mt-8 space-y-4">
           {user.memberships.map((membership) => (
             <form key={membership.id} action={chooseOrganizationAction.bind(null, membership.organizationId)} className="flex items-center justify-between rounded-2xl border border-border bg-white p-5">

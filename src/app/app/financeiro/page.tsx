@@ -14,7 +14,7 @@ export default async function FinanceiroRoute() {
     <div className="space-y-8">
       <PageHeader
         title="Financeiro"
-        description="Visão inicial da operação financeira baseada em agendamentos concluídos."
+        description="Resumo financeiro com base nos atendimentos concluídos."
         action={
           membership.role === Role.OWNER ? (
             <Button asChild variant="outline">

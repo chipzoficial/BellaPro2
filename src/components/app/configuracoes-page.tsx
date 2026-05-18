@@ -82,7 +82,7 @@ export function ConfiguracoesPage({
               name="slug"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Slug público</FormLabel>
+                  <FormLabel>Endereço da sua página</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -92,7 +92,7 @@ export function ConfiguracoesPage({
                       }}
                     />
                   </FormControl>
-                  <p className="text-xs text-muted-foreground">O slug acompanha o nome até você editar manualmente. Exemplo: Salao da Leh → salao-da-leh</p>
+                  <p className="text-xs text-muted-foreground">Esse endereço acompanha o nome do salão automaticamente. Se quiser, você pode ajustar depois.</p>
                   <FormMessage />
                 </FormItem>
               )}
@@ -109,8 +109,8 @@ export function ConfiguracoesPage({
         </Form>
       </section>
       <section className="rounded-3xl border border-border bg-white p-6">
-        <h3 className="text-lg font-semibold">Link público de agendamento</h3>
-        <p className="mt-2 text-sm text-muted-foreground">Compartilhe este link com seus clientes para receber agendamentos diretos.</p>
+        <h3 className="text-lg font-semibold">Página de agendamento</h3>
+        <p className="mt-2 text-sm text-muted-foreground">Compartilhe este link com seus clientes para receber agendamentos online.</p>
         <div className="mt-6 rounded-2xl bg-muted p-4">
           <p className="text-sm font-medium break-all">{publicUrl}</p>
         </div>
@@ -119,7 +119,7 @@ export function ConfiguracoesPage({
             Copiar link
           </Button>
           <Button type="button" asChild>
-            <a href={publicUrl} target="_blank" rel="noreferrer">Abrir página pública</a>
+            <a href={publicUrl} target="_blank" rel="noreferrer">Abrir página</a>
           </Button>
         </div>
       </section>

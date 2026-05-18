@@ -37,7 +37,7 @@ export default async function PublicSlugPage({ params }: { params: Promise<{ slu
       <div className="container max-w-5xl">
         <div className="mb-8">
           <p className="font-heading text-5xl font-semibold text-brand-800">{organization.name}</p>
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">Agende seu horário de forma prática. Escolha o serviço, a profissional e confirme seus dados.</p>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">Escolha o serviço, o horário e confirme seus dados.</p>
         </div>
         {organization.services.length ? (
           <Card>
@@ -55,7 +55,7 @@ export default async function PublicSlugPage({ params }: { params: Promise<{ slu
             </CardContent>
           </Card>
         ) : (
-          <EmptyState title="Sem horários disponíveis" description="O salão ainda não publicou serviços ativos para o agendamento online." />
+          <EmptyState title="Sem horários disponíveis" description="Nenhum serviço está disponível para agendamento neste momento." />
         )}
       </div>
     </main>

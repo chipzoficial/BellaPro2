@@ -140,7 +140,7 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
                   ? isTrialing
                     ? `${overview.organization.name} está no teste grátis. ${nextBillingText}`
                     : `${nextBillingText}`
-                  : "Escolha o plano que melhor acompanha o ritmo do salão."}
+                  : "Escolha o plano que faz mais sentido para o seu salão."}
               </p>
             </div>
             {overview.currentSubscription && !isTrialing ? (
@@ -171,11 +171,11 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
               icon={ShieldCheck}
               label="Cobrança"
               value={overview.organization.stripeCustomerId ? "Cadastro pronto" : "Cadastro pendente"}
-              helper={overview.organization.email || "Defina um e-mail comercial em Configurações"}
+              helper={overview.organization.email || "Você pode definir um e-mail em Configurações"}
             />
             <SummaryTile
               icon={Sparkles}
-              label="Portal da cobrança"
+              label="Área de cobrança"
               value={canOpenPortal ? "Disponível" : "Disponível após a assinatura"}
               helper="Cartão, faturas e renovação ficam centralizados aqui."
             />
@@ -186,7 +186,7 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
           <h3 className="text-lg font-semibold text-foreground">Ações de cobrança</h3>
           <p className="mt-2 text-sm text-muted-foreground">
             {isTrialing
-              ? "Escolha um plano para seguir com a cobrança ao fim do teste."
+              ? "Você pode escolher um plano a qualquer momento."
               : "Gerencie assinatura, cartão e faturas por aqui."}
           </p>
 
@@ -209,7 +209,7 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
       <section className="space-y-4">
         <div>
           <h3 className="text-lg font-semibold text-foreground">Planos disponíveis</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Escolha o plano ideal para o momento do salão.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Veja as opções disponíveis para o seu salão.</p>
         </div>
 
         <div className="grid gap-4 xl:grid-cols-3">
@@ -256,7 +256,7 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
                     onClick={() => startCheckout(plan.id)}
                   >
                     {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                    {isCurrent ? "Plano atual" : "Assinar esse plano"}
+                    {isCurrent ? "Plano atual" : "Escolher este plano"}
                   </Button>
                 </div>
               </div>

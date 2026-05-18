@@ -9,7 +9,7 @@ export default async function ClientesRoute() {
 
   return (
     <div className="space-y-8">
-      <PageHeader title="Clientes" description="Cadastre clientes, acompanhe contatos e mantenha observações internas organizadas." />
+      <PageHeader title="Clientes" description="Gerencie sua base de clientes." />
       <ClientesPage initialClients={summary.clients} />
     </div>
   );

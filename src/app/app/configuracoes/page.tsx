@@ -14,7 +14,7 @@ export default async function ConfiguracoesRoute() {
     <div className="space-y-8">
       <PageHeader
         title="Configurações"
-        description="Atualize os dados do salão, o link público de agendamento e a cobrança recorrente."
+        description="Ajuste os dados do salão e a página de agendamento."
         action={
           membership.role === Role.OWNER ? (
             <Button asChild variant="outline">
