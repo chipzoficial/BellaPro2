@@ -1,11 +1,13 @@
 "use server";
 
-import { Role, SubscriptionStatus, WeekDay } from "@prisma/client";
+import { AuthTokenType, Role, SubscriptionStatus, WeekDay } from "@prisma/client";
 import { addDays } from "date-fns";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { clearSession, createSession, setActiveOrganization } from "@/lib/auth/session";
+import { createAuthToken, revokeAuthTokens } from "@/lib/auth-tokens";
+import { sendVerificationEmail } from "@/lib/email";
 import { onboardingServiceCatalog } from "@/lib/onboarding";
 import { registerSchema, loginSchema } from "@/lib/validations/auth";
 import type { ActionState } from "@/types";
@@ -189,6 +191,27 @@ export async function registerAction(input: unknown): Promise<ActionState> {
     userId: result.user.id,
     activeOrganizationId: result.organization.id,
   });
+
+  try {
+    await revokeAuthTokens({
+      userId: result.user.id,
+      type: AuthTokenType.EMAIL_VERIFICATION,
+    });
+
+    const verificationToken = await createAuthToken({
+      userId: result.user.id,
+      type: AuthTokenType.EMAIL_VERIFICATION,
+      expiresInHours: 24,
+    });
+
+    await sendVerificationEmail({
+      to: result.user.email,
+      name: result.user.name,
+      token: verificationToken,
+    });
+  } catch (error) {
+    console.error("Falha ao preparar envio de confirmação de e-mail:", error);
+  }
 
   return { success: true, message: "/app" };
 }

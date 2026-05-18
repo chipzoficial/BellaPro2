@@ -32,6 +32,11 @@ enum SubscriptionStatus {
   EXPIRED
 }
 
+enum AuthTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
 enum WeekDay {
   SUNDAY
   MONDAY
@@ -46,11 +51,13 @@ model User {
   id           String       @id @default(cuid())
   name         String
   email        String       @unique
+  emailVerifiedAt DateTime?
   passwordHash String
   phone        String?
   avatarUrl    String?
   isActive     Boolean      @default(true)
   memberships  Membership[]
+  authTokens   AuthToken[]
   professional Professional?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
@@ -245,4 +252,18 @@ model StripeWebhookEvent {
   processedAt    DateTime
   createdAt      DateTime     @default(now())
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+}
+
+model AuthToken {
+  id         String        @id @default(cuid())
+  userId     String
+  type       AuthTokenType
+  tokenHash  String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime      @default(now())
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@unique([type, tokenHash])
 }
