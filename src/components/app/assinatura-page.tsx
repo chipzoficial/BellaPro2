@@ -187,9 +187,6 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
             </Button>
           </div>
 
-          <div className="mt-6 rounded-2xl border border-dashed border-border px-4 py-4 text-sm text-muted-foreground">
-            Se o plano local ainda não tiver um <code>stripePriceId</code> configurado, o checkout será bloqueado até a vinculação com a Stripe.
-          </div>
         </aside>
       </section>
 
@@ -243,7 +240,7 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
                     onClick={() => startCheckout(plan.id)}
                   >
                     {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                    {isCurrent ? "Plano atual" : "Assinar com Stripe"}
+                    {isCurrent ? "Plano atual" : "Assinar esse plano"}
                   </Button>
                 </div>
               </div>
