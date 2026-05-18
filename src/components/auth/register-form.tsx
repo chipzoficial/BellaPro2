@@ -65,6 +65,7 @@ export function RegisterForm() {
   const [isPending, startTransition] = useTransition();
   const [step, setStep] = useState(0);
   const [slugLocked, setSlugLocked] = useState(false);
+  const [reviewConfirmed, setReviewConfirmed] = useState(false);
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -129,6 +130,12 @@ export function RegisterForm() {
     [selectedServiceKeys]
   );
 
+  useEffect(() => {
+    if (step !== onboardingSteps.length - 1) {
+      setReviewConfirmed(false);
+    }
+  }, [step]);
+
   async function goToNextStep() {
     const valid = await validateCurrentStep();
     if (!valid) {
@@ -174,6 +181,11 @@ export function RegisterForm() {
 
     if (step < onboardingSteps.length - 1) {
       await goToNextStep();
+      return;
+    }
+
+    if (!reviewConfirmed) {
+      toast.error("Revise os dados e confirme a revisão antes de criar a conta.");
       return;
     }
 
@@ -271,6 +283,8 @@ export function RegisterForm() {
             <ReviewStep
               values={form.getValues()}
               selectedServices={selectedServices}
+              reviewConfirmed={reviewConfirmed}
+              onReviewConfirmedChange={setReviewConfirmed}
             />
           ) : null}
         </div>
@@ -292,9 +306,9 @@ export function RegisterForm() {
                 <ArrowRight className="h-4 w-4" />
               </Button>
             ) : (
-              <Button type="submit" disabled={isPending}>
+              <Button type="submit" disabled={isPending || !reviewConfirmed}>
                 <Sparkles className="h-4 w-4" />
-                {isPending ? "Criando sua conta..." : "Começar teste grátis"}
+                {isPending ? "Criando sua conta..." : "Confirmar e começar teste grátis"}
               </Button>
             )}
           </div>
@@ -578,9 +592,13 @@ function ProfessionalsStep({
 function ReviewStep({
   values,
   selectedServices,
+  reviewConfirmed,
+  onReviewConfirmedChange,
 }: {
   values: RegisterInput;
   selectedServices: Array<(typeof onboardingServiceCatalog)[number]>;
+  reviewConfirmed: boolean;
+  onReviewConfirmedChange: (value: boolean) => void;
 }) {
   return (
     <div className="space-y-6">
@@ -638,6 +656,32 @@ function ReviewStep({
           ))}
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => onReviewConfirmedChange(!reviewConfirmed)}
+        className={cn(
+          "flex w-full items-start gap-3 rounded-[22px] border px-4 py-4 text-left transition-colors",
+          reviewConfirmed ? "border-brand-300 bg-brand-50/70" : "border-border bg-[#fffaf9]"
+        )}
+      >
+        <span
+          className={cn(
+            "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs",
+            reviewConfirmed
+              ? "border-brand-700 bg-brand-700 text-white"
+              : "border-border bg-white text-transparent"
+          )}
+        >
+          <Check className="h-3.5 w-3.5" />
+        </span>
+        <div>
+          <p className="text-sm font-medium text-foreground">Revisei os dados e quero criar a conta agora</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            O teste grátis de 14 dias será iniciado assim que a conta for criada.
+          </p>
+        </div>
+      </button>
     </div>
   );
 }
