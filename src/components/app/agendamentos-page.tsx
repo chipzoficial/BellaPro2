@@ -246,7 +246,7 @@ export function AgendamentosPage({
       </section>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[720px]">
           <DialogHeader>
             <DialogTitle>{form.getValues("id") ? "Editar agendamento" : "Novo agendamento"}</DialogTitle>
           </DialogHeader>
@@ -263,14 +263,14 @@ export function AgendamentosPage({
               } else {
                 toast.error(result.message);
               }
-            }))} className="space-y-4">
-              <div className="space-y-3">
+            }))} className="space-y-5">
+              <div className="space-y-2.5">
                 <Label>Cliente</Label>
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                   <button
                     type="button"
                     className={cn(
-                      "flex items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors",
+                      "flex items-center gap-3 rounded-full border px-4 py-2.5 text-left transition-colors",
                       clientMode === "new" ? "border-primary bg-primary/5" : "border-border bg-background"
                     )}
                     onClick={() => {
@@ -287,7 +287,7 @@ export function AgendamentosPage({
                   <button
                     type="button"
                     className={cn(
-                      "flex items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors",
+                      "flex items-center gap-3 rounded-full border px-4 py-2.5 text-left transition-colors",
                       clientMode === "existing" ? "border-primary bg-primary/5" : "border-border bg-background"
                     )}
                     onClick={() => {
@@ -355,7 +355,7 @@ export function AgendamentosPage({
                     control={form.control}
                     name="clientName"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="relative">
                         <FormLabel>Nome</FormLabel>
                         <FormControl>
                           <Input
@@ -367,29 +367,29 @@ export function AgendamentosPage({
                             }}
                           />
                         </FormControl>
+                        {matchingClients.length ? (
+                          <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-border bg-white shadow-lg">
+                            {matchingClients.map((item) => (
+                              <button
+                                key={item.id}
+                                type="button"
+                                className="flex w-full items-start justify-between gap-4 border-b border-border px-4 py-3 text-left last:border-b-0 hover:bg-muted"
+                                onClick={() => {
+                                  form.setValue("clientId", item.id, { shouldValidate: true });
+                                  form.setValue("clientName", item.name, { shouldValidate: true });
+                                  form.setValue("clientPhone", item.phone ?? "");
+                                }}
+                              >
+                                <span className="font-medium">{item.name}</span>
+                                <span className="text-sm text-muted-foreground">{item.phone || ""}</span>
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  {matchingClients.length ? (
-                    <div className="rounded-lg border border-border">
-                      {matchingClients.map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          className="flex w-full items-start justify-between gap-4 border-b border-border px-4 py-3 text-left last:border-b-0 hover:bg-muted"
-                          onClick={() => {
-                            form.setValue("clientId", item.id, { shouldValidate: true });
-                            form.setValue("clientName", item.name, { shouldValidate: true });
-                            form.setValue("clientPhone", item.phone ?? "");
-                          }}
-                        >
-                          <span className="font-medium">{item.name}</span>
-                          <span className="text-sm text-muted-foreground">{item.phone || item.email || ""}</span>
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
                 </div>
               )}
               <FormField control={form.control} name="serviceId" render={({ field }) => <FormItem><FormLabel>Serviço</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{services.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>} />
@@ -420,74 +420,78 @@ export function AgendamentosPage({
                   </FormItem>
                 )}
               />
-              <div className="grid gap-4 md:grid-cols-[220px_1fr]">
-                <FormItem>
-                  <FormLabel>Data</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="date"
-                      value={selectedDate}
-                      ref={dateInputRef}
-                      onChange={(event) => {
-                        setSelectedDate(event.target.value);
-                        setSelectedTime("");
-                        lastAvailabilityKeyRef.current = "";
-                        form.setValue("startAt", "");
-                      }}
-                      onClick={() => {
-                        const input = dateInputRef.current;
-                        if (input && "showPicker" in input) {
-                          input.showPicker();
-                        }
-                      }}
-                    />
-                  </FormControl>
-                </FormItem>
-                <FormField
-                  control={form.control}
-                  name="startAt"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Horários disponíveis</FormLabel>
-                      <div className="flex min-h-[56px] flex-wrap content-start items-start gap-2">
-                        {availableSlots.length ? (
-                          availableSlots.map((slot) => (
-                            <button
-                              key={`${slot.professionalId}-${slot.time}`}
-                              type="button"
-                              onClick={() => {
-                                setSelectedTime(slot.time);
-                                form.setValue("professionalId", slot.professionalId, { shouldValidate: true });
-                                field.onChange(new Date(`${selectedDate}T${slot.time}:00`).toISOString());
-                              }}
-                              className={cn(
-                                "rounded-full border px-3 py-2 text-sm transition-colors",
-                                selectedTime === slot.time
-                                  ? "border-primary bg-primary text-primary-foreground"
-                                  : "border-border bg-background hover:bg-muted"
-                              )}
-                            >
-                              {slot.time}
-                            </button>
-                          ))
-                        ) : (
-                          <p className="text-sm text-muted-foreground">
-                            {selectedDate
-                              ? isLoadingSlots
-                                ? "Carregando horários..."
-                                : "Nenhum horário disponível para esta data."
-                              : "Escolha uma data para ver os horários."}
-                          </p>
-                        )}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="rounded-[1.5rem] border border-border bg-[#fffaf9] px-4 py-4 sm:px-5">
+                <div className="grid gap-4 md:grid-cols-[240px_1fr]">
+                  <FormItem>
+                    <FormLabel>Data</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        value={selectedDate}
+                        ref={dateInputRef}
+                        onChange={(event) => {
+                          setSelectedDate(event.target.value);
+                          setSelectedTime("");
+                          lastAvailabilityKeyRef.current = "";
+                          form.setValue("startAt", "");
+                        }}
+                        onClick={() => {
+                          const input = dateInputRef.current;
+                          if (input && "showPicker" in input) {
+                            input.showPicker();
+                          }
+                        }}
+                      />
+                    </FormControl>
+                  </FormItem>
+                  <FormField
+                    control={form.control}
+                    name="startAt"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Horários disponíveis</FormLabel>
+                        <div className="space-y-3">
+                          <div className="flex min-h-[56px] flex-wrap content-start items-start gap-2">
+                            {availableSlots.length ? (
+                              availableSlots.map((slot) => (
+                                <button
+                                  key={`${slot.professionalId}-${slot.time}`}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedTime(slot.time);
+                                    form.setValue("professionalId", slot.professionalId, { shouldValidate: true });
+                                    field.onChange(new Date(`${selectedDate}T${slot.time}:00`).toISOString());
+                                  }}
+                                  className={cn(
+                                    "rounded-full border px-3 py-2 text-sm transition-colors",
+                                    selectedTime === slot.time
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-border bg-background hover:bg-muted"
+                                  )}
+                                >
+                                  {slot.time}
+                                </button>
+                              ))
+                            ) : (
+                              <p className="text-sm text-muted-foreground">
+                                {selectedDate
+                                  ? isLoadingSlots
+                                    ? "Carregando horários..."
+                                    : "Nenhum horário disponível para esta data."
+                                  : "Escolha uma data para ver os horários."}
+                              </p>
+                            )}
+                          </div>
+                          <FormMessage />
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 border-t border-border pt-4">
                 <Button type="submit" disabled={isPending}>Salvar agendamento</Button>
-                <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+                <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
               </div>
             </form>
           </Form>
