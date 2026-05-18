@@ -13,13 +13,13 @@ export function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className={cn("flex min-h-60 flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/40 px-6 py-10 text-center", className)}>
-      <div className="mb-4 rounded-full bg-brand-100 p-3 text-brand-700">
-        <Sparkles className="h-5 w-5" />
+    <div className={cn("flex min-h-44 flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/40 px-5 py-8 text-center sm:min-h-60 sm:px-6 sm:py-10", className)}>
+      <div className="mb-3 rounded-full bg-brand-100 p-2.5 text-brand-700 sm:mb-4 sm:p-3">
+        <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
       </div>
-      <h3 className="text-lg font-semibold">{title}</h3>
-      <p className="mt-2 max-w-md text-sm text-muted-foreground">{description}</p>
-      {action ? <div className="mt-5">{action}</div> : null}
+      <h3 className="text-base font-semibold sm:text-lg">{title}</h3>
+      <p className="mt-1.5 max-w-md text-xs text-muted-foreground sm:mt-2 sm:text-sm">{description}</p>
+      {action ? <div className="mt-4 sm:mt-5">{action}</div> : null}
     </div>
   );
 }

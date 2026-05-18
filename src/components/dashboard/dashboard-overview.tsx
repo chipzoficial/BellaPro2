@@ -80,20 +80,20 @@ export function DashboardOverview({
     : "Sem próximos atendimentos";
 
   return (
-    <div className="space-y-8">
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_360px]">
+    <div className="space-y-6 sm:space-y-8">
+      <section className="grid gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1.25fr)_360px]">
         <Card className="bg-white/90">
-          <CardContent className="p-6 md:p-7">
-            <div className="space-y-5">
+          <CardContent className="p-4 sm:p-6 md:p-7">
+            <div className="space-y-4 sm:space-y-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <Badge variant="outline" className="border-brand-200 bg-brand-50 text-brand-700">
                     Ritmo do dia
                   </Badge>
-                  <h2 className="mt-4 font-heading text-3xl leading-tight text-foreground">
+                  <h2 className="mt-3 font-heading text-[1.75rem] leading-tight text-foreground sm:mt-4 sm:text-3xl">
                     {data.nextAppointment ? "Próximo atendimento" : "Visão do salão"}
                   </h2>
-                  <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                  <p className="mt-1.5 max-w-2xl text-xs text-muted-foreground sm:mt-2 sm:text-sm">
                     {data.nextAppointment
                       ? `${nextAppointmentLabel} com ${data.nextAppointment.professional.name}.`
                       : "Sem agendamentos futuros neste momento."}
@@ -102,7 +102,7 @@ export function DashboardOverview({
                 {data.nextAppointment ? <StatusBadge status={data.nextAppointment.status} /> : null}
               </div>
 
-              <div className="grid gap-4 border-t border-border pt-5 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-3 border-t border-border pt-4 sm:gap-4 sm:pt-5 sm:grid-cols-2 xl:grid-cols-4">
                 <QuickStat
                   icon={CalendarClock}
                   label="Atendimentos hoje"
@@ -133,21 +133,21 @@ export function DashboardOverview({
         </Card>
 
         <Card className="bg-white/90">
-          <CardContent className="p-6">
-            <div className="space-y-5">
+          <CardContent className="p-4 sm:p-6">
+            <div className="space-y-4 sm:space-y-5">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">Atalho rápido</p>
-                <h3 className="text-xl font-semibold text-foreground">
+                <h3 className="text-lg font-semibold text-foreground sm:text-xl">
                   {data.nextAppointment ? data.nextAppointment.client.name : data.organization.name}
                 </h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground sm:text-sm">
                   {data.nextAppointment
                     ? `${data.nextAppointment.service.name} com ${data.nextAppointment.professional.name}`
                     : "Sem agendamentos no momento."}
                 </p>
               </div>
 
-              <div className="space-y-2">
+              <div className="grid gap-2 sm:space-y-2">
                 <InfoRow
                   icon={Clock3}
                   label="Próximo horário"
@@ -160,7 +160,7 @@ export function DashboardOverview({
                 />
               </div>
 
-              <div className="grid gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <QuickAction href="/app/agenda" icon={CalendarClock} label="Abrir agenda" />
                 <QuickAction href="/app/agendamentos?novo=1" icon={Plus} label="Novo agendamento" />
                 <QuickAction href="/app/clientes" icon={Users} label="Novo cliente" />
@@ -173,7 +173,7 @@ export function DashboardOverview({
 
       <section className="space-y-4">
         <SectionHeader title="Hoje" description="O que pede atenção imediata no salão." />
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-3 grid-cols-2 sm:gap-4 xl:grid-cols-5">
           <MetricCard label="Agendamentos do dia" value={String(data.metrics.today.appointmentsCount)} helper={`${data.metrics.today.completedCount} concluído${data.metrics.today.completedCount === 1 ? "" : "s"}`} />
           <MetricCard label="Pendentes agora" value={String(data.metrics.today.pendingCount)} helper="Confirmações que ainda exigem retorno" />
           <MetricCard label="Em atendimento" value={String(data.metrics.today.activeNowCount)} helper="Clientes em execução neste instante" />
@@ -184,7 +184,7 @@ export function DashboardOverview({
 
       <section className="space-y-4">
         <SectionHeader title="Mês" description="Leitura de desempenho e consistência da operação." />
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 grid-cols-2 sm:gap-4 xl:grid-cols-4">
           <MetricCard label="Faturamento realizado" value={formatMoney(data.metrics.month.estimatedRevenue)} helper={`${data.metrics.month.completedCount} atendimento${data.metrics.month.completedCount === 1 ? "" : "s"} concluído${data.metrics.month.completedCount === 1 ? "" : "s"}`} />
           <MetricCard label="Taxa de comparecimento" value={`${data.metrics.month.attendanceRate}%`} helper="Baseada em concluídos e faltas registradas" />
           <MetricCard label="Ticket médio" value={formatMoney(data.metrics.month.ticketAverage)} helper="Valor médio por atendimento concluído" />
@@ -192,8 +192,8 @@ export function DashboardOverview({
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)]">
-        <div className="space-y-6">
+      <section className="grid gap-5 sm:gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)]">
+        <div className="space-y-5 sm:space-y-6">
           <div>
             <SectionHeader title="Agenda de hoje" description="Linha do tempo operacional para acompanhar o ritmo do salão." />
             <TodayTimeline items={data.todayAppointments} />
@@ -205,20 +205,20 @@ export function DashboardOverview({
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div>
+        <div className="flex flex-col gap-5 sm:gap-6">
+          <div className="order-3 xl:order-1">
+            <SectionHeader title="Alertas rápidos" description="Pontos que merecem ajuste antes de virar problema na agenda." />
+            <AlertsPanel items={data.alerts} />
+          </div>
+
+          <div className="order-1 xl:order-2">
             <SectionHeader title="Equipe do dia" description="Carga de atendimentos e próximo horário de cada profissional." />
             <ProfessionalsPanel items={data.professionalsToday} />
           </div>
 
-          <div>
+          <div className="order-2 xl:order-3">
             <SectionHeader title="Serviços mais vendidos" description="Ranking do mês com volume e faturamento." />
             <TopServicesPanel items={data.serviceLeaders} />
-          </div>
-
-          <div>
-            <SectionHeader title="Alertas rápidos" description="Pontos que merecem ajuste antes de virar problema na agenda." />
-            <AlertsPanel items={data.alerts} />
           </div>
         </div>
       </section>
@@ -238,13 +238,13 @@ function QuickStat({
   helper: string;
 }) {
   return (
-    <div className="border-l border-border pl-4">
+    <div className="border-l border-border pl-3 sm:pl-4">
       <div className="flex items-center gap-2 text-muted-foreground">
         <Icon className="h-4 w-4 text-brand-700" />
         <span className="text-xs font-medium uppercase tracking-[0.16em]">{label}</span>
       </div>
-      <p className="mt-3 text-2xl font-semibold text-foreground">{value}</p>
-      <p className="mt-1 text-xs text-muted-foreground">{helper}</p>
+      <p className="mt-2 text-xl font-semibold text-foreground sm:mt-3 sm:text-2xl">{value}</p>
+      <p className="mt-1 text-[11px] text-muted-foreground sm:text-xs">{helper}</p>
     </div>
   );
 }
@@ -261,10 +261,10 @@ function QuickAction({
   external?: boolean;
 }) {
   return (
-    <Button asChild variant="ghost" className="h-auto justify-start rounded-2xl border border-border bg-background px-4 py-3 text-left">
+    <Button asChild variant="ghost" className="h-auto justify-start rounded-2xl border border-border bg-background px-3 py-3 text-left sm:px-4">
       <Link href={href} {...(external ? { target: "_blank", rel: "noreferrer" } : {})}>
         <Icon className="h-4 w-4 text-brand-700" />
-        <span>{label}</span>
+        <span className="text-sm leading-tight">{label}</span>
       </Link>
     </Button>
   );
@@ -280,7 +280,7 @@ function InfoRow({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-[#fffaf9] px-4 py-3">
+    <div className="rounded-2xl border border-border bg-[#fffaf9] px-3 py-3 sm:px-4">
       <div className="flex items-start gap-3">
         <Icon className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" />
         <div className="min-w-0">
@@ -302,10 +302,10 @@ function TodayTimeline({ items }: { items: AppointmentItem[] }) {
       {items.map((item, index) => (
         <div
           key={item.id}
-          className={`grid gap-3 px-5 py-4 md:grid-cols-[88px_minmax(0,1fr)_auto] md:items-center ${index !== items.length - 1 ? "border-b border-border" : ""}`}
+          className={`grid gap-2 px-4 py-3 md:grid-cols-[88px_minmax(0,1fr)_auto] md:items-center md:gap-3 md:px-5 md:py-4 ${index !== items.length - 1 ? "border-b border-border" : ""}`}
         >
           <div>
-            <p className="text-lg font-semibold text-brand-800">{format(item.startAt, "HH:mm", { locale: ptBR })}</p>
+            <p className="text-base font-semibold text-brand-800 md:text-lg">{format(item.startAt, "HH:mm", { locale: ptBR })}</p>
             <p className="text-xs text-muted-foreground">{format(item.endAt, "HH:mm", { locale: ptBR })}</p>
           </div>
           <div className="min-w-0">
@@ -331,7 +331,7 @@ function UpcomingList({ items }: { items: AppointmentItem[] }) {
   return (
     <div className="overflow-hidden rounded-[24px] border border-border bg-white">
       {items.map((item) => (
-        <div key={item.id} className="flex flex-col gap-3 border-b border-border px-5 py-4 last:border-b-0 md:flex-row md:items-center md:justify-between">
+        <div key={item.id} className="flex flex-col gap-2 border-b border-border px-4 py-3 last:border-b-0 md:flex-row md:items-center md:justify-between md:gap-3 md:px-5 md:py-4">
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <p className="font-medium text-foreground">{item.client.name}</p>
@@ -367,7 +367,7 @@ function ProfessionalsPanel({
   return (
     <div className="overflow-hidden rounded-[24px] border border-border bg-white">
       {items.map((item, index) => (
-        <div key={item.id} className={`px-5 py-4 ${index !== items.length - 1 ? "border-b border-border" : ""}`}>
+        <div key={item.id} className={`px-4 py-3 md:px-5 md:py-4 ${index !== items.length - 1 ? "border-b border-border" : ""}`}>
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="font-medium text-foreground">{item.name}</p>
@@ -396,7 +396,7 @@ function TopServicesPanel({ items }: { items: Array<{ name: string; count: numbe
   return (
     <div className="overflow-hidden rounded-[24px] border border-border bg-white">
       {items.map((item, index) => (
-        <div key={item.name} className={`flex items-center justify-between gap-4 px-5 py-4 ${index !== items.length - 1 ? "border-b border-border" : ""}`}>
+        <div key={item.name} className={`flex items-center justify-between gap-4 px-4 py-3 md:px-5 md:py-4 ${index !== items.length - 1 ? "border-b border-border" : ""}`}>
           <div className="min-w-0">
             <p className="truncate font-medium text-foreground">{item.name}</p>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -429,9 +429,9 @@ function AlertsPanel({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2 sm:space-y-3">
       {items.map((item) => (
-        <div key={item.title} className={`rounded-[22px] border px-4 py-4 ${toneClassMap[item.tone]}`}>
+        <div key={item.title} className={`rounded-[22px] border px-4 py-3 sm:py-4 ${toneClassMap[item.tone]}`}>
           <div className="flex items-start gap-3">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" />
             <div>
