@@ -17,6 +17,11 @@ const cormorant = Cormorant_Garamond({
 export const metadata: Metadata = {
   title: "BellaPro",
   description: "Gestão e agendamento para salões de beleza.",
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

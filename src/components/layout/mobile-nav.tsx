@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AppLogo } from "@/components/brand/app-logo";
 import { navigationItems } from "@/components/layout/navigation-items";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -20,7 +21,7 @@ export function MobileNav() {
       </SheetTrigger>
       <SheetContent side="left" className="max-w-xs bg-[#fffaf9]">
         <div className="mb-6">
-          <p className="font-heading text-3xl font-semibold text-brand-800">BellaPro</p>
+          <AppLogo className="w-[170px]" />
           <p className="mt-2 text-sm text-muted-foreground">Seu salão, sua agenda, seu controle.</p>
         </div>
         <nav className="space-y-1">

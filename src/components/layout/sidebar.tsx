@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { AppLogo } from "@/components/brand/app-logo";
 import { navigationItems } from "@/components/layout/navigation-items";
 
 export function Sidebar({ pathname }: { pathname: string }) {
   return (
     <aside className="hidden w-72 shrink-0 border-r border-border bg-[#fffaf9] px-5 py-6 lg:flex lg:flex-col">
       <div className="mb-8">
-        <p className="font-heading text-3xl font-semibold text-brand-800">BellaPro</p>
+        <AppLogo className="w-[170px]" />
         <p className="mt-2 text-sm text-muted-foreground">Gestão e agendamento para salões de beleza.</p>
       </div>
       <nav className="space-y-1">
