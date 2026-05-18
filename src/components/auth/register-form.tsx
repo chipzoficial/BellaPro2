@@ -171,7 +171,40 @@ export function RegisterForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="grid gap-3 lg:grid-cols-5">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-4 rounded-[22px] border border-border bg-white px-4 py-4 md:hidden">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                Etapa {step + 1} de {onboardingSteps.length}
+              </p>
+              <p className="mt-2 text-lg font-semibold text-foreground">{onboardingSteps[step].title}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{onboardingSteps[step].description}</p>
+            </div>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-700 text-sm font-semibold text-white">
+              {step + 1}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-5 gap-2 md:hidden">
+            {onboardingSteps.map((item, index) => {
+              const isCurrent = index === step;
+              const isDone = index < step;
+
+              return (
+                <div
+                  key={`${item.id}-mobile`}
+                  className={cn(
+                    "h-1.5 rounded-full transition-colors",
+                    isCurrent && "bg-brand-700",
+                    isDone && "bg-emerald-600",
+                    !isCurrent && !isDone && "bg-border"
+                  )}
+                />
+              );
+            })}
+          </div>
+
+          <div className="hidden gap-3 md:grid md:grid-cols-2 xl:grid-cols-5">
           {onboardingSteps.map((item, index) => {
             const isCurrent = index === step;
             const isDone = index < step;
@@ -180,16 +213,16 @@ export function RegisterForm() {
               <div
                 key={item.id}
                 className={cn(
-                  "rounded-[24px] border px-4 py-4 transition-colors",
+                  "flex min-h-[176px] flex-col rounded-[24px] border px-4 py-4 transition-colors",
                   isCurrent && "border-brand-300 bg-white",
                   isDone && "border-emerald-200 bg-emerald-50/70",
                   !isCurrent && !isDone && "border-border bg-[#fffaf9]"
                 )}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex h-full flex-col gap-4">
                   <span
                     className={cn(
-                      "flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold",
+                      "flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold",
                       isDone && "bg-emerald-600 text-white",
                       isCurrent && "bg-brand-700 text-white",
                       !isCurrent && !isDone && "bg-muted text-muted-foreground"
@@ -198,13 +231,14 @@ export function RegisterForm() {
                     {isDone ? <Check className="h-4 w-4" /> : index + 1}
                   </span>
                   <div>
-                    <p className="text-sm font-medium text-foreground">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">{item.description}</p>
+                    <p className="text-base font-medium text-foreground">{item.title}</p>
+                    <p className="mt-2 text-sm text-muted-foreground">{item.description}</p>
                   </div>
                 </div>
               </div>
             );
           })}
+          </div>
         </div>
 
         <div className="rounded-[30px] border border-border bg-white px-6 py-7 md:px-7">
