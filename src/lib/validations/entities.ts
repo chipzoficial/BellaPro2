@@ -32,6 +32,7 @@ export const serviceSchema = z.object({
 
 export const appointmentSchema = z.object({
   id: z.string().optional(),
+  clientMode: z.enum(["existing", "new"]).default("existing"),
   clientId: z.string().optional().or(z.literal("")),
   clientName: z.string().trim().min(2, "Informe o nome do cliente."),
   clientPhone: phoneSchema,
@@ -41,6 +42,22 @@ export const appointmentSchema = z.object({
   startAt: z.string().min(1),
   status: z.nativeEnum(AppointmentStatus).default(AppointmentStatus.CONFIRMED),
   notes: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.clientMode === "existing" && !data.clientId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["clientName"],
+      message: "Selecione um cliente cadastrado.",
+    });
+  }
+
+  if (data.clientMode === "new" && !data.clientPhone) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["clientPhone"],
+      message: "Informe o telefone do cliente.",
+    });
+  }
 });
 
 export const publicBookingSchema = z.object({
