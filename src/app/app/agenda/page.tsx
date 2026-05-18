@@ -14,7 +14,7 @@ export default async function AgendaPage() {
     <div className="space-y-6">
       <PageHeader
         title="Agenda"
-        description="Grade diária por horário e profissional no desktop, com calendário mensal compacto e lista clara no mobile."
+        description="Acompanhe os horários do dia e os próximos atendimentos."
       />
       <AgendaWorkspace appointments={appointments} professionals={professionals} />
     </div>

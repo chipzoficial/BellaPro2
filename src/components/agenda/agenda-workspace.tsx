@@ -165,17 +165,17 @@ export function AgendaWorkspace({
   return (
     <div className="space-y-6">
       <section className="rounded-[1.75rem] border border-border bg-white/75 p-4 shadow-soft backdrop-blur md:p-5">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm font-medium text-brand-700">
               <CalendarDays className="h-4 w-4" />
               {format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
               {dayAppointments.length} agendamento{dayAppointments.length === 1 ? "" : "s"} no dia selecionado.
             </p>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap xl:items-center xl:justify-end">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap xl:items-center xl:justify-end">
             <div className="flex items-center gap-2">
               <Button
                 type="button"
@@ -224,7 +224,7 @@ export function AgendaWorkspace({
         </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+      <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
         <section className="rounded-[1.75rem] border border-border bg-white/80 p-4 shadow-soft md:p-5">
           <div className="flex items-center justify-between">
             <div>
@@ -284,7 +284,7 @@ export function AgendaWorkspace({
                   type="button"
                   onClick={() => selectDay(day)}
                   className={cn(
-                    "flex min-h-14 flex-col items-center justify-center rounded-2xl px-1 py-2 text-sm transition-colors",
+                    "flex min-h-12 flex-col items-center justify-center rounded-2xl px-1 py-1.5 text-sm transition-colors sm:min-h-14 sm:py-2",
                     inMonth ? "text-foreground" : "text-muted-foreground/45",
                     selected && "bg-brand-600 text-white shadow-sm",
                     !selected && isToday(day) && "bg-brand-50 text-brand-700",
@@ -305,7 +305,7 @@ export function AgendaWorkspace({
             })}
           </div>
 
-          <Separator className="my-5" />
+          <Separator className="my-4 sm:my-5" />
 
           <div className="space-y-3 xl:hidden">
             <div className="flex items-center justify-between">
@@ -321,7 +321,7 @@ export function AgendaWorkspace({
                     key={item.id}
                     type="button"
                     onClick={() => setSelectedAppointment(item)}
-                    className="grid w-full gap-3 rounded-2xl border border-border bg-background px-4 py-3 text-left"
+                    className="grid w-full gap-2 rounded-2xl border border-border bg-background px-4 py-3 text-left"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-brand-700">

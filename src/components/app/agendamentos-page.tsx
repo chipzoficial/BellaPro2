@@ -144,7 +144,7 @@ export function AgendamentosPage({
 
       if (!stillAvailable) {
         setSelectedTime("");
-        form.setValue("startAt", "", { shouldValidate: true });
+        form.setValue("startAt", "");
       }
     });
   }, [form, open, selectedDate, selectedTime, watchedAppointmentId, watchedProfessionalId, watchedServiceId]);
@@ -432,7 +432,7 @@ export function AgendamentosPage({
                         setSelectedDate(event.target.value);
                         setSelectedTime("");
                         lastAvailabilityKeyRef.current = "";
-                        form.setValue("startAt", "", { shouldValidate: true });
+                        form.setValue("startAt", "");
                       }}
                       onClick={() => {
                         const input = dateInputRef.current;

@@ -38,7 +38,7 @@ export const appointmentSchema = z.object({
   clientPhone: phoneSchema,
   professionalId: z.string().min(1),
   serviceId: z.string().min(1),
-  startAt: z.string().min(1),
+  startAt: z.string().min(1, "Selecione um horário disponível."),
   status: z.nativeEnum(AppointmentStatus).default(AppointmentStatus.CONFIRMED),
   notes: z.string().optional(),
 }).superRefine((data, ctx) => {
