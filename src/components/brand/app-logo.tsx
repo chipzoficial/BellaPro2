@@ -1,5 +1,5 @@
 import Image from "next/image";
-import bellaproLogo from "../../../img/bellapro-logo.png";
+import bellaproLogo from "@/app/bellapro-logo.png";
 import { cn } from "@/lib/utils";
 
 export function AppLogo({
