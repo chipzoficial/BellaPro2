@@ -53,20 +53,40 @@ async function main() {
     },
   });
 
-  const subscriptionPlan = await db.subscriptionPlan.create({
-    data: {
-      name: "Plano Profissional",
-      description: "Plano base para desenvolvimento do BellaPro",
-      priceInCents: 19900,
-      maxProfessionals: 10,
-      maxAppointmentsPerMonth: 500,
-    },
-  });
+  const [basePlan] = await Promise.all(
+    [
+      {
+        name: "Base",
+        description: "Ideal para autônomos e salões em início de operação.",
+        priceInCents: 3700,
+        maxProfessionals: 5,
+        maxAppointmentsPerMonth: 300,
+      },
+      {
+        name: "Studio",
+        description: "Ideal para salões em crescimento com rotina intensa.",
+        priceInCents: 6700,
+        maxProfessionals: 10,
+        maxAppointmentsPerMonth: 1000,
+      },
+      {
+        name: "Elevate",
+        description: "Ideal para operações maiores e equipes com alta demanda.",
+        priceInCents: 14700,
+        maxProfessionals: 20,
+        maxAppointmentsPerMonth: null,
+      },
+    ].map((plan) =>
+      db.subscriptionPlan.create({
+        data: plan,
+      })
+    )
+  );
 
   await db.subscription.create({
     data: {
       organizationId: organization.id,
-      planId: subscriptionPlan.id,
+      planId: basePlan.id,
       status: SubscriptionStatus.TRIALING,
       currentPeriodStart: new Date(),
       currentPeriodEnd: addDays(new Date(), 14),
