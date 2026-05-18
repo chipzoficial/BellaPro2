@@ -1,6 +1,7 @@
 "use server";
 
-import { Role } from "@prisma/client";
+import { Role, SubscriptionStatus } from "@prisma/client";
+import { addDays } from "date-fns";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
@@ -53,6 +54,15 @@ export async function registerAction(input: unknown): Promise<ActionState> {
   const passwordHash = await hashPassword(parsed.data.password);
 
   const result = await db.$transaction(async (tx) => {
+    const defaultPlan =
+      (await tx.subscriptionPlan.findFirst({
+        where: { name: "Base", isActive: true },
+      })) ??
+      (await tx.subscriptionPlan.findFirst({
+        where: { isActive: true },
+        orderBy: [{ priceInCents: "asc" }, { createdAt: "asc" }],
+      }));
+
     const user = await tx.user.create({
       data: {
         name: parsed.data.name,
@@ -80,6 +90,18 @@ export async function registerAction(input: unknown): Promise<ActionState> {
         role: Role.OWNER,
       },
     });
+
+    if (defaultPlan) {
+      await tx.subscription.create({
+        data: {
+          organizationId: organization.id,
+          planId: defaultPlan.id,
+          status: SubscriptionStatus.TRIALING,
+          currentPeriodStart: new Date(),
+          currentPeriodEnd: addDays(new Date(), 14),
+        },
+      });
+    }
 
     return { user, organization };
   });
