@@ -7,6 +7,21 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Informe a senha."),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Informe um e-mail válido."),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1, "Token inválido."),
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, "Confirme a nova senha."),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "As senhas não coincidem.",
+  });
+
 const requiredPhoneSchema = phoneSchema.refine((value) => !!value, "Informe um telefone.");
 const serviceKeyEnum = z.enum(onboardingServiceCatalog.map((service) => service.key) as [string, ...string[]]);
 
@@ -61,4 +76,6 @@ export const registerSchema = z
   });
 
 export type LoginInput = z.infer<typeof loginSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

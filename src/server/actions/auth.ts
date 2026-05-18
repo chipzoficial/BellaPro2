@@ -6,10 +6,15 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { clearSession, createSession, setActiveOrganization } from "@/lib/auth/session";
-import { createAuthToken, revokeAuthTokens } from "@/lib/auth-tokens";
-import { sendVerificationEmail } from "@/lib/email";
+import { consumeAuthToken, createAuthToken, revokeAuthTokens } from "@/lib/auth-tokens";
+import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/email";
 import { onboardingServiceCatalog } from "@/lib/onboarding";
-import { registerSchema, loginSchema } from "@/lib/validations/auth";
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  registerSchema,
+  resetPasswordSchema,
+} from "@/lib/validations/auth";
 import type { ActionState } from "@/types";
 
 function fail(message: string, errors?: Record<string, string[] | undefined>): ActionState {
@@ -214,6 +219,115 @@ export async function registerAction(input: unknown): Promise<ActionState> {
   }
 
   return { success: true, message: "/app" };
+}
+
+export async function requestPasswordResetAction(input: unknown): Promise<ActionState> {
+  const parsed = forgotPasswordSchema.safeParse(input);
+  if (!parsed.success) return fail("Dados inválidos.", parsed.error.flatten().fieldErrors);
+
+  const user = await db.user.findUnique({
+    where: { email: parsed.data.email.toLowerCase() },
+  });
+
+  if (user) {
+    try {
+      await revokeAuthTokens({
+        userId: user.id,
+        type: AuthTokenType.PASSWORD_RESET,
+      });
+
+      const resetToken = await createAuthToken({
+        userId: user.id,
+        type: AuthTokenType.PASSWORD_RESET,
+        expiresInHours: 1,
+      });
+
+      await sendPasswordResetEmail({
+        to: user.email,
+        name: user.name,
+        token: resetToken,
+      });
+    } catch (error) {
+      console.error("Falha ao preparar redefinição de senha:", error);
+      return fail("Não foi possível enviar o e-mail de redefinição agora.");
+    }
+  }
+
+  return {
+    success: true,
+    message: "Se esse e-mail existir no BellaPro, você receberá um link para redefinir a senha.",
+  };
+}
+
+export async function resetPasswordAction(input: unknown): Promise<ActionState> {
+  const parsed = resetPasswordSchema.safeParse(input);
+  if (!parsed.success) return fail("Dados inválidos.", parsed.error.flatten().fieldErrors);
+
+  const authToken = await consumeAuthToken({
+    type: AuthTokenType.PASSWORD_RESET,
+    token: parsed.data.token,
+  });
+
+  if (!authToken) {
+    return fail("O link de redefinição é inválido ou expirou.");
+  }
+
+  try {
+    const passwordHash = await hashPassword(parsed.data.password);
+
+    await db.user.update({
+      where: { id: authToken.userId },
+      data: { passwordHash },
+    });
+
+    await revokeAuthTokens({
+      userId: authToken.userId,
+      type: AuthTokenType.PASSWORD_RESET,
+    });
+
+    return {
+      success: true,
+      message: "Senha redefinida com sucesso. Agora você já pode entrar.",
+    };
+  } catch (error) {
+    console.error("Falha ao redefinir senha:", error);
+    return fail("Não foi possível redefinir a senha.");
+  }
+}
+
+export async function confirmEmailAction(token: string): Promise<ActionState> {
+  if (!token) {
+    return fail("Token de confirmação inválido.");
+  }
+
+  const authToken = await consumeAuthToken({
+    type: AuthTokenType.EMAIL_VERIFICATION,
+    token,
+  });
+
+  if (!authToken) {
+    return fail("O link de confirmação é inválido ou expirou.");
+  }
+
+  try {
+    await db.user.update({
+      where: { id: authToken.userId },
+      data: { emailVerifiedAt: new Date() },
+    });
+
+    await revokeAuthTokens({
+      userId: authToken.userId,
+      type: AuthTokenType.EMAIL_VERIFICATION,
+    });
+
+    return {
+      success: true,
+      message: "E-mail confirmado com sucesso.",
+    };
+  } catch (error) {
+    console.error("Falha ao confirmar e-mail:", error);
+    return fail("Não foi possível confirmar o e-mail.");
+  }
 }
 
 export async function logoutAction() {

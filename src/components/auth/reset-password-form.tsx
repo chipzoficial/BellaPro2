@@ -5,32 +5,36 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { loginAction } from "@/server/actions/auth";
-import { loginSchema, type LoginInput } from "@/lib/validations/auth";
+import { resetPasswordAction } from "@/server/actions/auth";
+import { resetPasswordSchema, type ResetPasswordInput } from "@/lib/validations/auth";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 
-export function LoginForm() {
+export function ResetPasswordForm({ token }: { token: string }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const form = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<ResetPasswordInput>({
+    resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
-      email: "",
+      token,
       password: "",
+      confirmPassword: "",
     },
   });
 
-  function onSubmit(values: LoginInput) {
+  function onSubmit(values: ResetPasswordInput) {
     startTransition(async () => {
-      const result = await loginAction(values);
+      const result = await resetPasswordAction(values);
+
       if (!result.success) {
         toast.error(result.message);
         return;
       }
-      router.push(result.message);
+
+      toast.success(result.message);
+      router.push("/");
       router.refresh();
     });
   }
@@ -40,39 +44,39 @@ export function LoginForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <FormField
           control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>E-mail</FormLabel>
-              <FormControl>
-                <Input placeholder="voce@bellapro.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Senha</FormLabel>
+              <FormLabel>Nova senha</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="Sua senha" {...field} />
+                <Input type="password" placeholder="Digite a nova senha" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="confirmPassword"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Confirmar nova senha</FormLabel>
+              <FormControl>
+                <Input type="password" placeholder="Repita a nova senha" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <Button type="submit" size="lg" className="w-full" disabled={isPending}>
-          Entrar no painel
+          {isPending ? "Salvando nova senha..." : "Salvar nova senha"}
         </Button>
-        <div className="flex items-center justify-between text-sm">
-          <Link href="/criar-conta" className="font-medium text-primary hover:underline">
-            Criar conta
-          </Link>
-          <Link href="/esqueci-minha-senha" className="font-medium text-primary hover:underline">
-            Esqueci minha senha
+
+        <div className="text-sm">
+          <Link href="/" className="font-medium text-primary hover:underline">
+            Voltar ao login
           </Link>
         </div>
       </form>
