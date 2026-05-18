@@ -100,7 +100,7 @@ export function DashboardOverview({
                 <p className="text-sm font-semibold text-foreground">
                   {subscriptionNotice.isExpiringSoon
                     ? `Seu teste termina em ${subscriptionNotice.daysRemaining} dia${subscriptionNotice.daysRemaining === 1 ? "" : "s"}.`
-                    : `Seu teste do plano ${subscriptionNotice.planName} está ativo.`}
+                    : "Seu período de teste está ativo."}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Vigente até {formatDateTime(subscriptionNotice.currentPeriodEnd, "dd/MM/yyyy")}. Escolha um plano para manter a agenda liberada sem interrupções.

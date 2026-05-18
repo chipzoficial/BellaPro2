@@ -61,7 +61,8 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
   const [isOpeningPortal, setIsOpeningPortal] = useState(false);
 
-  const currentPlanId = overview.currentSubscription?.plan.id ?? null;
+  const isTrialing = overview.currentSubscription?.status === SubscriptionStatus.TRIALING;
+  const currentPlanId = !isTrialing ? overview.currentSubscription?.plan.id ?? null : null;
   const canOpenPortal = Boolean(overview.organization.stripeCustomerId);
   const nextBillingText = useMemo(() => {
     if (!overview.currentSubscription) return "Ainda não existe assinatura ativa.";
@@ -129,15 +130,21 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
                 {overview.currentSubscription ? statusLabelMap[overview.currentSubscription.status] : "Sem assinatura ativa"}
               </Badge>
               <h2 className="mt-4 font-heading text-3xl text-foreground">
-                {overview.currentSubscription ? overview.currentSubscription.plan.name : "Escolha um plano para cobrar seus salões"}
+                {overview.currentSubscription
+                  ? isTrialing
+                    ? "Período de teste"
+                    : overview.currentSubscription.plan.name
+                  : "Escolha um plano para cobrar seus salões"}
               </h2>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                 {overview.currentSubscription
-                  ? `Plano atual da organização ${overview.organization.name}. ${nextBillingText}`
+                  ? isTrialing
+                    ? `A organização ${overview.organization.name} está usando o BellaPro em modo de teste. ${nextBillingText}`
+                    : `Plano atual da organização ${overview.organization.name}. ${nextBillingText}`
                   : "Ative a cobrança recorrente via Stripe Checkout. O BellaPro sincroniza o status da assinatura por webhook."}
               </p>
             </div>
-            {overview.currentSubscription ? (
+            {overview.currentSubscription && !isTrialing ? (
               <div className="rounded-2xl border border-border bg-[#fffaf9] px-4 py-3 text-right">
                 <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Valor recorrente</p>
                 <p className="mt-2 text-2xl font-semibold text-foreground">
@@ -173,14 +180,18 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
         <aside className="rounded-[28px] border border-border bg-white p-6 shadow-soft">
           <h3 className="text-lg font-semibold text-foreground">Ações de cobrança</h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            Use o checkout para novas assinaturas e o portal da Stripe para gerenciar cartão, faturas e cancelamento.
+            {isTrialing
+              ? "Seu período de teste está ativo. Escolha um dos planos abaixo para iniciar a cobrança recorrente antes do vencimento."
+              : "Use o checkout para novas assinaturas e o portal da Stripe para gerenciar cartão, faturas e cancelamento."}
           </p>
 
           <div className="mt-6 space-y-3">
-            <Button type="button" className="w-full justify-between" onClick={() => currentPlanId && startCheckout(currentPlanId)} disabled={!currentPlanId || Boolean(overview.currentSubscription?.status === SubscriptionStatus.ACTIVE)}>
-              <span>Assinar plano atual</span>
-              {loadingPlanId === currentPlanId ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
-            </Button>
+            {!isTrialing ? (
+              <Button type="button" className="w-full justify-between" onClick={() => currentPlanId && startCheckout(currentPlanId)} disabled={!currentPlanId || Boolean(overview.currentSubscription?.status === SubscriptionStatus.ACTIVE)}>
+                <span>Assinar plano atual</span>
+                {loadingPlanId === currentPlanId ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
+              </Button>
+            ) : null}
             <Button type="button" variant="outline" className="w-full justify-between" onClick={openPortal} disabled={!canOpenPortal || isOpeningPortal}>
               <span>Abrir portal da cobrança</span>
               {isOpeningPortal ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}

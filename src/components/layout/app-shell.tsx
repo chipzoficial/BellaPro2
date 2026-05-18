@@ -44,7 +44,6 @@ function TrialBanner({
   notice,
 }: {
   notice: {
-    planName: string;
     currentPeriodEnd: Date;
     daysRemaining: number;
     isExpiringSoon: boolean;
@@ -68,8 +67,8 @@ function TrialBanner({
           <div>
             <p className="text-sm font-medium text-foreground">
               {notice.isExpiringSoon
-                ? `Seu teste do plano ${notice.planName} termina em ${notice.daysRemaining} dia${notice.daysRemaining === 1 ? "" : "s"}.`
-                : `Seu teste do plano ${notice.planName} está ativo.`}
+                ? `Seu período de teste termina em ${notice.daysRemaining} dia${notice.daysRemaining === 1 ? "" : "s"}.`
+                : "Seu período de teste está ativo."}
             </p>
             <p className="text-xs text-muted-foreground">
               Vigente até {formatDateTime(notice.currentPeriodEnd, "dd/MM/yyyy")}. Escolha um plano para evitar bloqueios quando o período promocional acabar.
