@@ -35,11 +35,9 @@ async function resolveAppointmentClient(params: {
   clientId?: string;
   clientName: string;
   clientPhone?: string;
-  clientEmail?: string;
 }) {
   const normalizedName = params.clientName.trim();
   const normalizedPhone = params.clientPhone?.trim() || null;
-  const normalizedEmail = params.clientEmail?.trim().toLowerCase() || null;
 
   if (params.clientId) {
     const existingById = await db.client.findFirst({
@@ -61,14 +59,7 @@ async function resolveAppointmentClient(params: {
           phone: normalizedPhone,
         },
       })
-    : normalizedEmail
-      ? await db.client.findFirst({
-          where: {
-            organizationId: params.organizationId,
-            email: normalizedEmail,
-          },
-        })
-      : await db.client.findFirst({
+    : await db.client.findFirst({
           where: {
             organizationId: params.organizationId,
             name: {
@@ -81,15 +72,13 @@ async function resolveAppointmentClient(params: {
   if (existingClient) {
     const shouldUpdateName = existingClient.name !== normalizedName;
     const shouldUpdatePhone = !existingClient.phone && normalizedPhone;
-    const shouldUpdateEmail = !existingClient.email && normalizedEmail;
 
-    if (shouldUpdateName || shouldUpdatePhone || shouldUpdateEmail) {
+    if (shouldUpdateName || shouldUpdatePhone) {
       await db.client.update({
         where: { id: existingClient.id },
         data: {
           name: normalizedName,
           phone: shouldUpdatePhone ? normalizedPhone : existingClient.phone,
-          email: shouldUpdateEmail ? normalizedEmail : existingClient.email,
         },
       });
     }
@@ -102,7 +91,6 @@ async function resolveAppointmentClient(params: {
       organizationId: params.organizationId,
       name: normalizedName,
       phone: normalizedPhone,
-      email: normalizedEmail,
     },
   });
 
@@ -368,7 +356,6 @@ export async function upsertAppointment(input: unknown): Promise<ActionState> {
       clientId: data.clientId || undefined,
       clientName: data.clientName,
       clientPhone: data.clientPhone || undefined,
-      clientEmail: data.clientEmail || undefined,
     });
 
     const endAt = addMinutes(startAt, service.durationMinutes);

@@ -36,7 +36,6 @@ export const appointmentSchema = z.object({
   clientId: z.string().optional().or(z.literal("")),
   clientName: z.string().trim().min(2, "Informe o nome do cliente."),
   clientPhone: phoneSchema,
-  clientEmail: z.string().email("E-mail inválido.").optional().or(z.literal("")),
   professionalId: z.string().min(1),
   serviceId: z.string().min(1),
   startAt: z.string().min(1),

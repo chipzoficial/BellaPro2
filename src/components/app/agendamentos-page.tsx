@@ -54,7 +54,6 @@ export function AgendamentosPage({
       clientId: "",
       clientName: "",
       clientPhone: "",
-      clientEmail: "",
       professionalId: professionals[0]?.id ?? "",
       serviceId: services[0]?.id ?? "",
       startAt: "",
@@ -72,7 +71,6 @@ export function AgendamentosPage({
       clientId: "",
       clientName: "",
       clientPhone: "",
-      clientEmail: "",
       professionalId: professionals[0]?.id ?? "",
       serviceId: services[0]?.id ?? "",
       startAt: "",
@@ -171,7 +169,6 @@ export function AgendamentosPage({
                         clientId: item.clientId,
                         clientName: item.client.name,
                         clientPhone: item.client.phone ?? "",
-                        clientEmail: item.client.email ?? "",
                         professionalId: item.professionalId,
                         serviceId: item.serviceId,
                         startAt: new Date(item.startAt).toISOString().slice(0, 16),
@@ -233,7 +230,6 @@ export function AgendamentosPage({
                       form.setValue("clientId", "");
                       form.setValue("clientName", "");
                       form.setValue("clientPhone", "");
-                      form.setValue("clientEmail", "");
                     }}
                   >
                     <span className={cn("h-4 w-4 rounded-full border", clientMode === "new" ? "border-primary bg-primary" : "border-border")} />
@@ -251,7 +247,6 @@ export function AgendamentosPage({
                       form.setValue("clientId", "");
                       form.setValue("clientName", "");
                       form.setValue("clientPhone", "");
-                      form.setValue("clientEmail", "");
                     }}
                   >
                     <span className={cn("h-4 w-4 rounded-full border", clientMode === "existing" ? "border-primary bg-primary" : "border-border")} />
@@ -304,27 +299,6 @@ export function AgendamentosPage({
                       )}
                     />
                   </div>
-                  <FormField
-                    control={form.control}
-                    name="clientEmail"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>E-mail</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="email"
-                            placeholder="E-mail do cliente"
-                            onChange={(event) => {
-                              field.onChange(event);
-                              form.setValue("clientId", "");
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </>
               ) : (
                 <div className="space-y-3">
@@ -359,7 +333,6 @@ export function AgendamentosPage({
                             form.setValue("clientId", item.id, { shouldValidate: true });
                             form.setValue("clientName", item.name, { shouldValidate: true });
                             form.setValue("clientPhone", item.phone ?? "");
-                            form.setValue("clientEmail", item.email ?? "");
                           }}
                         >
                           <span className="font-medium">{item.name}</span>
