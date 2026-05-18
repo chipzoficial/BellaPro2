@@ -34,7 +34,7 @@ export function AgendamentosPage({
 }: {
   initialOpen?: boolean;
   appointments: Array<any>;
-  clients: Array<{ id: string; name: string }>;
+  clients: Array<{ id: string; name: string; phone?: string | null; email?: string | null }>;
   professionals: Array<{ id: string; name: string }>;
   services: Array<{
     id: string;
@@ -48,7 +48,10 @@ export function AgendamentosPage({
   const form = useForm<any>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
-      clientId: clients[0]?.id ?? "",
+      clientId: "",
+      clientName: "",
+      clientPhone: "",
+      clientEmail: "",
       professionalId: professionals[0]?.id ?? "",
       serviceId: services[0]?.id ?? "",
       startAt: "",
@@ -60,7 +63,10 @@ export function AgendamentosPage({
 
   function resetForNewAppointment() {
     form.reset({
-      clientId: clients[0]?.id ?? "",
+      clientId: "",
+      clientName: "",
+      clientPhone: "",
+      clientEmail: "",
       professionalId: professionals[0]?.id ?? "",
       serviceId: services[0]?.id ?? "",
       startAt: "",
@@ -144,6 +150,9 @@ export function AgendamentosPage({
                       form.reset({
                         id: item.id,
                         clientId: item.clientId,
+                        clientName: item.client.name,
+                        clientPhone: item.client.phone ?? "",
+                        clientEmail: item.client.email ?? "",
                         professionalId: item.professionalId,
                         serviceId: item.serviceId,
                         startAt: new Date(item.startAt).toISOString().slice(0, 16),
@@ -175,7 +184,7 @@ export function AgendamentosPage({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{form.getValues("id") ? "Editar agendamento" : "Novo agendamento"}</DialogTitle>
-            <DialogDescription>Abra o formulário somente quando for realmente criar ou editar um atendimento.</DialogDescription>
+            <DialogDescription>Informe os dados do cliente e o BellaPro aproveita o cadastro existente ou cria um novo ao salvar.</DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit((values) => startTransition(async () => {
@@ -190,7 +199,78 @@ export function AgendamentosPage({
                 toast.error(result.message);
               }
             }))} className="space-y-4">
-              <FormField control={form.control} name="clientId" render={({ field }) => <FormItem><FormLabel>Cliente</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{clients.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>} />
+              <div className="grid gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="clientName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cliente</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          list="appointment-client-suggestions"
+                          placeholder="Digite o nome do cliente"
+                          onChange={(event) => {
+                            field.onChange(event);
+                            form.setValue("clientId", "");
+                          }}
+                        />
+                      </FormControl>
+                      <datalist id="appointment-client-suggestions">
+                        {clients.map((item) => (
+                          <option key={item.id} value={item.name} />
+                        ))}
+                      </datalist>
+                      <p className="text-sm text-muted-foreground">
+                        Se o cliente já existir, use o mesmo nome. Se ainda não existir, o cadastro é criado ao salvar.
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="clientPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefone</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Telefone do cliente"
+                          onChange={(event) => {
+                            field.onChange(event);
+                            form.setValue("clientId", "");
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="clientEmail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>E-mail</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="email"
+                        placeholder="E-mail do cliente"
+                        onChange={(event) => {
+                          field.onChange(event);
+                          form.setValue("clientId", "");
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField control={form.control} name="serviceId" render={({ field }) => <FormItem><FormLabel>Serviço</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{services.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>} />
               <FormField
                 control={form.control}

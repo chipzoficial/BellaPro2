@@ -30,6 +30,85 @@ function fail(message: string, errors?: Record<string, string[] | undefined>): A
   return { success: false, message, errors };
 }
 
+async function resolveAppointmentClient(params: {
+  organizationId: string;
+  clientId?: string;
+  clientName: string;
+  clientPhone?: string;
+  clientEmail?: string;
+}) {
+  const normalizedName = params.clientName.trim();
+  const normalizedPhone = params.clientPhone?.trim() || null;
+  const normalizedEmail = params.clientEmail?.trim().toLowerCase() || null;
+
+  if (params.clientId) {
+    const existingById = await db.client.findFirst({
+      where: {
+        id: params.clientId,
+        organizationId: params.organizationId,
+      },
+    });
+
+    if (existingById) {
+      return existingById.id;
+    }
+  }
+
+  const existingClient = normalizedPhone
+    ? await db.client.findFirst({
+        where: {
+          organizationId: params.organizationId,
+          phone: normalizedPhone,
+        },
+      })
+    : normalizedEmail
+      ? await db.client.findFirst({
+          where: {
+            organizationId: params.organizationId,
+            email: normalizedEmail,
+          },
+        })
+      : await db.client.findFirst({
+          where: {
+            organizationId: params.organizationId,
+            name: {
+              equals: normalizedName,
+              mode: "insensitive",
+            },
+          },
+        });
+
+  if (existingClient) {
+    const shouldUpdateName = existingClient.name !== normalizedName;
+    const shouldUpdatePhone = !existingClient.phone && normalizedPhone;
+    const shouldUpdateEmail = !existingClient.email && normalizedEmail;
+
+    if (shouldUpdateName || shouldUpdatePhone || shouldUpdateEmail) {
+      await db.client.update({
+        where: { id: existingClient.id },
+        data: {
+          name: normalizedName,
+          phone: shouldUpdatePhone ? normalizedPhone : existingClient.phone,
+          email: shouldUpdateEmail ? normalizedEmail : existingClient.email,
+        },
+      });
+    }
+
+    return existingClient.id;
+  }
+
+  const newClient = await db.client.create({
+    data: {
+      organizationId: params.organizationId,
+      name: normalizedName,
+      phone: normalizedPhone,
+      email: normalizedEmail,
+    },
+  });
+
+  return newClient.id;
+}
+
 async function requireScope(resource: "clients" | "professionals" | "services" | "appointments" | "settings" | "financial") {
   const membership = await getCurrentMembership();
 
@@ -284,6 +363,14 @@ export async function upsertAppointment(input: unknown): Promise<ActionState> {
       currentAppointmentId: data.id,
     });
 
+    const clientId = await resolveAppointmentClient({
+      organizationId: membership.organizationId,
+      clientId: data.clientId || undefined,
+      clientName: data.clientName,
+      clientPhone: data.clientPhone || undefined,
+      clientEmail: data.clientEmail || undefined,
+    });
+
     const endAt = addMinutes(startAt, service.durationMinutes);
     const conflict = await db.appointment.findFirst({
       where: {
@@ -301,7 +388,7 @@ export async function upsertAppointment(input: unknown): Promise<ActionState> {
       await db.appointment.update({
         where: { id: data.id, organizationId: membership.organizationId },
         data: {
-          clientId: data.clientId,
+          clientId,
           professionalId: professional.id,
           serviceId: service.id,
           startAt,
@@ -315,7 +402,7 @@ export async function upsertAppointment(input: unknown): Promise<ActionState> {
       await db.appointment.create({
         data: {
           organizationId: membership.organizationId,
-          clientId: data.clientId,
+          clientId,
           professionalId: professional.id,
           serviceId: service.id,
           startAt,
