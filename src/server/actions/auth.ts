@@ -9,6 +9,7 @@ import { clearSession, createSession, setActiveOrganization } from "@/lib/auth/s
 import { consumeAuthToken, createAuthToken, revokeAuthTokens } from "@/lib/auth-tokens";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/email";
 import { onboardingServiceCatalog } from "@/lib/onboarding";
+import { getAvailableOrganizationSlug } from "@/lib/organization-slug";
 import { ensureDefaultSubscriptionPlans } from "@/lib/subscription-bootstrap";
 import {
   forgotPasswordSchema,
@@ -56,9 +57,7 @@ export async function registerAction(input: unknown): Promise<ActionState> {
   const email = parsed.data.email.toLowerCase();
   const existingUser = await db.user.findUnique({ where: { email } });
   if (existingUser) return fail("Já existe uma conta com esse e-mail.");
-
-  const existingOrganization = await db.organization.findUnique({ where: { slug: parsed.data.slug } });
-  if (existingOrganization) return fail("Esse slug já está em uso.");
+  const availableSlug = await getAvailableOrganizationSlug(parsed.data.slug);
 
   const passwordHash = await hashPassword(parsed.data.password);
   const selectedServiceTemplates = onboardingServiceCatalog.filter((service) =>
@@ -81,7 +80,7 @@ export async function registerAction(input: unknown): Promise<ActionState> {
     const organization = await tx.organization.create({
       data: {
         name: parsed.data.salonName,
-        slug: parsed.data.slug,
+        slug: availableSlug,
         phone: parsed.data.salonPhone || null,
         city: parsed.data.city,
         state: parsed.data.state,

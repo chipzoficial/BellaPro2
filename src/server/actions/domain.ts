@@ -7,6 +7,7 @@ import { z } from "zod";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { enforceAppointmentLimit, enforceProfessionalLimit } from "@/lib/billing";
 import { db } from "@/lib/db";
+import { getAvailableOrganizationSlug } from "@/lib/organization-slug";
 import { canAccess } from "@/lib/permissions";
 import { getAvailableSlots, buildStartDate } from "@/lib/availability";
 import { getCurrentMembership } from "@/lib/auth/session";
@@ -356,20 +357,15 @@ export async function updateOrganization(input: unknown): Promise<ActionState> {
     const membership = await getCurrentMembership([Role.OWNER]);
     const parsed = organizationSchema.safeParse(input);
     if (!parsed.success) return fail("Dados inválidos.", parsed.error.flatten().fieldErrors);
-
-    const existing = await db.organization.findFirst({
-      where: {
-        slug: parsed.data.slug,
-        id: { not: membership.organizationId },
-      },
+    const availableSlug = await getAvailableOrganizationSlug(parsed.data.slug, {
+      excludeOrganizationId: membership.organizationId,
     });
-    if (existing) return fail("Esse slug já está em uso.");
 
     await db.organization.update({
       where: { id: membership.organizationId },
       data: {
         name: parsed.data.name,
-        slug: parsed.data.slug,
+        slug: availableSlug,
         phone: parsed.data.phone || null,
         email: parsed.data.email || null,
         address: parsed.data.address || null,
@@ -379,7 +375,11 @@ export async function updateOrganization(input: unknown): Promise<ActionState> {
     });
 
     revalidatePath("/app/configuracoes");
-    return ok("Configurações atualizadas.");
+    return ok(
+      availableSlug === parsed.data.slug
+        ? "Configurações atualizadas."
+        : `Configurações atualizadas. O novo endereço da sua página ficou em /${availableSlug}.`
+    );
   } catch (error) {
     return fail(error instanceof Error ? error.message : "Erro ao atualizar salão.");
   }
