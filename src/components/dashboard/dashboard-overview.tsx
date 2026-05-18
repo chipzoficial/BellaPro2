@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AppointmentStatus } from "@prisma/client";
+import { AppointmentStatus, SubscriptionStatus } from "@prisma/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -11,6 +11,7 @@ import {
   Clock3,
   Plus,
   Scissors,
+  Sparkles,
   Users,
 } from "lucide-react";
 import { MetricCard } from "@/components/dashboard/metric-card";
@@ -35,6 +36,7 @@ type AppointmentItem = {
 export function DashboardOverview({
   data,
   publicBaseUrl,
+  subscriptionNotice,
 }: {
   data: {
     organization: { name: string; slug: string };
@@ -73,6 +75,14 @@ export function DashboardOverview({
     };
   };
   publicBaseUrl: string;
+  subscriptionNotice: {
+    status: SubscriptionStatus;
+    planName: string;
+    currentPeriodEnd: Date;
+    daysRemaining: number;
+    isTrial: boolean;
+    isExpiringSoon: boolean;
+  } | null;
 }) {
   const publicUrl = new URL(`/${data.organization.slug}`, publicBaseUrl).toString();
   const nextAppointmentLabel = data.nextAppointment
@@ -81,6 +91,29 @@ export function DashboardOverview({
 
   return (
     <div className="space-y-8">
+      {subscriptionNotice?.isTrial ? (
+        <Card className={subscriptionNotice.isExpiringSoon ? "border-amber-200 bg-amber-50/80" : "border-brand-200 bg-brand-50/70"}>
+          <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-3">
+              <Sparkles className={`mt-0.5 h-4 w-4 shrink-0 ${subscriptionNotice.isExpiringSoon ? "text-amber-700" : "text-brand-700"}`} />
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  {subscriptionNotice.isExpiringSoon
+                    ? `Seu teste termina em ${subscriptionNotice.daysRemaining} dia${subscriptionNotice.daysRemaining === 1 ? "" : "s"}.`
+                    : `Seu teste do plano ${subscriptionNotice.planName} está ativo.`}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Vigente até {formatDateTime(subscriptionNotice.currentPeriodEnd, "dd/MM/yyyy")}. Escolha um plano para manter a agenda liberada sem interrupções.
+                </p>
+              </div>
+            </div>
+            <Button asChild className="w-full md:w-auto">
+              <Link href="/app/assinatura">Escolher plano</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_360px]">
         <Card className="bg-white/90">
           <CardContent className="p-6 md:p-7">

@@ -1,5 +1,5 @@
 import { AppointmentStatus, SubscriptionStatus } from "@prisma/client";
-import { endOfMonth, startOfMonth } from "date-fns";
+import { differenceInCalendarDays, endOfMonth, startOfMonth } from "date-fns";
 import { db } from "@/lib/db";
 
 const allowedSubscriptionStatuses = [
@@ -19,6 +19,27 @@ async function getCurrentSubscriptionWithPlan(organizationId: string) {
     },
     orderBy: [{ currentPeriodEnd: "desc" }],
   });
+}
+
+export async function getSubscriptionNotice(organizationId: string) {
+  const subscription = await getCurrentSubscriptionWithPlan(organizationId);
+
+  if (!subscription) {
+    return null;
+  }
+
+  const daysRemaining = Math.max(differenceInCalendarDays(subscription.currentPeriodEnd, new Date()), 0);
+
+  return {
+    status: subscription.status,
+    planName: subscription.plan.name,
+    currentPeriodEnd: subscription.currentPeriodEnd,
+    daysRemaining,
+    isTrial:
+      subscription.status === SubscriptionStatus.TRIALING,
+    isExpiringSoon:
+      subscription.status === SubscriptionStatus.TRIALING && daysRemaining <= 5,
+  };
 }
 
 export async function requireOperationalSubscription(organizationId: string) {
