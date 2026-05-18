@@ -8,8 +8,10 @@ export default function CriarContaPage() {
       <div className="container max-w-5xl">
         <div className="mb-8">
           <Link href="/" className="text-sm font-medium text-primary hover:underline">Voltar para o login</Link>
-          <h1 className="mt-4 font-heading text-5xl font-semibold text-brand-800">Criar conta</h1>
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">Cadastre o primeiro usuário owner e o primeiro salão. Após o cadastro você entra direto em `/app`.</p>
+          <h1 className="mt-4 font-heading text-5xl font-semibold text-brand-800">Criar conta e configurar seu salão</h1>
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+            Siga o onboarding inicial para montar a conta, o salão, os serviços e a equipe antes de entrar no BellaPro. Ao concluir, o teste grátis de 14 dias começa com a base já pronta para operar.
+          </p>
         </div>
         <Card>
           <CardContent className="p-8">

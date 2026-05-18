@@ -1,11 +1,12 @@
 "use server";
 
-import { Role, SubscriptionStatus } from "@prisma/client";
+import { Role, SubscriptionStatus, WeekDay } from "@prisma/client";
 import { addDays } from "date-fns";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { clearSession, createSession, setActiveOrganization } from "@/lib/auth/session";
+import { onboardingServiceCatalog } from "@/lib/onboarding";
 import { registerSchema, loginSchema } from "@/lib/validations/auth";
 import type { ActionState } from "@/types";
 
@@ -52,6 +53,9 @@ export async function registerAction(input: unknown): Promise<ActionState> {
   if (existingOrganization) return fail("Esse slug já está em uso.");
 
   const passwordHash = await hashPassword(parsed.data.password);
+  const selectedServiceTemplates = onboardingServiceCatalog.filter((service) =>
+    parsed.data.serviceKeys.includes(service.key)
+  );
 
   const result = await db.$transaction(async (tx) => {
     const defaultPlan =
@@ -102,6 +106,81 @@ export async function registerAction(input: unknown): Promise<ActionState> {
         },
       });
     }
+
+    const createdServices = await Promise.all(
+      selectedServiceTemplates.map((service) =>
+        tx.service.create({
+          data: {
+            organizationId: organization.id,
+            name: service.name,
+            description: service.description,
+            durationMinutes: service.durationMinutes,
+            priceInCents: service.priceInCents,
+            isActive: true,
+          },
+        })
+      )
+    );
+
+    const serviceIdByKey = Object.fromEntries(
+      createdServices.map((service, index) => [selectedServiceTemplates[index].key, service.id])
+    );
+
+    const createdProfessionals = await Promise.all(
+      parsed.data.professionals.map((professional) =>
+        tx.professional.create({
+          data: {
+            organizationId: organization.id,
+            name: professional.name,
+            phone: professional.phone || null,
+            email: professional.email || null,
+            isActive: true,
+          },
+        })
+      )
+    );
+
+    const professionalServices = parsed.data.professionals.flatMap((professional, index) =>
+      professional.serviceKeys.map((serviceKey) => ({
+        professionalId: createdProfessionals[index].id,
+        serviceId: serviceIdByKey[serviceKey],
+      }))
+    );
+
+    if (professionalServices.length) {
+      await tx.professionalService.createMany({
+        data: professionalServices,
+      });
+    }
+
+    const weekDays = [
+      WeekDay.MONDAY,
+      WeekDay.TUESDAY,
+      WeekDay.WEDNESDAY,
+      WeekDay.THURSDAY,
+      WeekDay.FRIDAY,
+      WeekDay.SATURDAY,
+    ];
+
+    await tx.businessHour.createMany({
+      data: weekDays.flatMap((weekDay) => [
+        {
+          organizationId: organization.id,
+          weekDay,
+          startTime: "09:00",
+          endTime: "19:00",
+          isActive: true,
+        },
+        ...createdProfessionals.map((professional) => ({
+          organizationId: organization.id,
+          professionalId: professional.id,
+          weekDay,
+          startTime: "09:00",
+          endTime: "18:00",
+          isActive: true,
+        })),
+      ]),
+    });
 
     return { user, organization };
   });
