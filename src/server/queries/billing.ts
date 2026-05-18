@@ -1,5 +1,6 @@
 import { SubscriptionStatus } from "@prisma/client";
 import { db } from "@/lib/db";
+import { ensureDefaultSubscriptionPlans, ensureTrialSubscriptionForOrganization } from "@/lib/subscription-bootstrap";
 
 const activeStatuses = [
   SubscriptionStatus.TRIALING,
@@ -8,6 +9,8 @@ const activeStatuses = [
 ] as const;
 
 export async function getBillingOverview(organizationId: string) {
+  await ensureDefaultSubscriptionPlans();
+
   const [organization, plans, currentSubscription] = await Promise.all([
     db.organization.findUniqueOrThrow({
       where: { id: organizationId },
@@ -37,6 +40,6 @@ export async function getBillingOverview(organizationId: string) {
   return {
     organization,
     plans,
-    currentSubscription,
+    currentSubscription: currentSubscription ?? (await ensureTrialSubscriptionForOrganization(organizationId)),
   };
 }

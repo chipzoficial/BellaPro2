@@ -1,6 +1,7 @@
 import { AppointmentStatus, SubscriptionStatus } from "@prisma/client";
 import { differenceInCalendarDays, endOfMonth, startOfMonth } from "date-fns";
 import { db } from "@/lib/db";
+import { ensureDefaultSubscriptionPlans, ensureTrialSubscriptionForOrganization } from "@/lib/subscription-bootstrap";
 
 const allowedSubscriptionStatuses = [
   SubscriptionStatus.TRIALING,
@@ -9,6 +10,8 @@ const allowedSubscriptionStatuses = [
 ] as const;
 
 async function getCurrentSubscriptionWithPlan(organizationId: string) {
+  await ensureDefaultSubscriptionPlans();
+
   return db.subscription.findFirst({
     where: {
       organizationId,
@@ -22,7 +25,9 @@ async function getCurrentSubscriptionWithPlan(organizationId: string) {
 }
 
 export async function getSubscriptionNotice(organizationId: string) {
-  const subscription = await getCurrentSubscriptionWithPlan(organizationId);
+  const subscription =
+    (await getCurrentSubscriptionWithPlan(organizationId)) ??
+    (await ensureTrialSubscriptionForOrganization(organizationId));
 
   if (!subscription) {
     return null;

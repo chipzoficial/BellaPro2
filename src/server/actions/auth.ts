@@ -9,6 +9,7 @@ import { clearSession, createSession, setActiveOrganization } from "@/lib/auth/s
 import { consumeAuthToken, createAuthToken, revokeAuthTokens } from "@/lib/auth-tokens";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/email";
 import { onboardingServiceCatalog } from "@/lib/onboarding";
+import { ensureDefaultSubscriptionPlans } from "@/lib/subscription-bootstrap";
 import {
   forgotPasswordSchema,
   loginSchema,
@@ -65,14 +66,8 @@ export async function registerAction(input: unknown): Promise<ActionState> {
   );
 
   const result = await db.$transaction(async (tx) => {
-    const defaultPlan =
-      (await tx.subscriptionPlan.findFirst({
-        where: { name: "Base", isActive: true },
-      })) ??
-      (await tx.subscriptionPlan.findFirst({
-        where: { isActive: true },
-        orderBy: [{ priceInCents: "asc" }, { createdAt: "asc" }],
-      }));
+    const defaultPlans = await ensureDefaultSubscriptionPlans(tx);
+    const defaultPlan = defaultPlans.find((plan) => plan.name === "Base") ?? defaultPlans[0];
 
     const user = await tx.user.create({
       data: {
