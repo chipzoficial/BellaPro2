@@ -10,7 +10,7 @@ export default function CriarContaPage() {
           <Link href="/" className="text-sm font-medium text-primary hover:underline">Voltar para o login</Link>
           <h1 className="mt-4 font-heading text-5xl font-semibold text-brand-800">Criar conta e configurar seu salão</h1>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-            Siga o onboarding inicial para montar a conta, o salão, os serviços e a equipe antes de entrar no BellaPro. Ao concluir, o teste grátis de 14 dias começa com a base já pronta para operar.
+            Configure conta, salão, serviços e equipe antes de entrar no painel. Ao concluir, o teste grátis de 14 dias começa automaticamente.
           </p>
         </div>
         <Card>

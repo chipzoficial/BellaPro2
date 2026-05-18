@@ -47,7 +47,7 @@ const onboardingSteps = [
   {
     id: "revisao",
     title: "Revisão",
-    description: "Confira tudo e comece o período de teste com a base pronta.",
+    description: "Revise os dados antes de criar a conta.",
   },
 ] as const;
 
@@ -353,7 +353,7 @@ function SalonStep({
       <div>
         <h2 className="font-heading text-4xl font-semibold text-brand-800">Passo 2: Seu salão</h2>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Defina a identidade básica do salão e quantas pessoas você quer cadastrar agora. Essas configurações podem ser alteradas depois.
+          Defina a identidade básica do salão e quantas pessoas deseja cadastrar agora.
         </p>
       </div>
 
@@ -517,7 +517,7 @@ function ProfessionalsStep({
       <div>
         <h2 className="font-heading text-4xl font-semibold text-brand-800">Passo 4: Profissionais</h2>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Cadastre a equipe inicial e vincule os serviços de cada pessoa. Essas configurações também podem ser alteradas depois.
+          Cadastre a equipe inicial e vincule os serviços de cada pessoa.
         </p>
       </div>
 
@@ -605,7 +605,7 @@ function ReviewStep({
       <div>
         <h2 className="font-heading text-4xl font-semibold text-brand-800">Passo 5: Revisar e concluir</h2>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Tudo certo para começar. Ao concluir, o BellaPro cria seu salão com um teste grátis de 14 dias e uma base inicial pronta para operar.
+          Revise as informações antes de concluir o cadastro.
         </p>
       </div>
 
@@ -615,7 +615,7 @@ function ReviewStep({
           rows={[
             ["Nome", values.name],
             ["E-mail", values.email],
-            ["Telefone", values.phone || "Não informado"],
+            ["Telefone", values.phone || "—"],
           ]}
         />
         <ReviewCard
@@ -623,7 +623,7 @@ function ReviewStep({
           rows={[
             ["Nome", values.salonName],
             ["Slug", values.slug],
-            ["Contato", values.salonPhone || "Não informado"],
+            ["Contato", values.salonPhone || "—"],
             ["Cidade", `${values.city} - ${values.state}`],
           ]}
         />
@@ -678,7 +678,7 @@ function ReviewStep({
         <div>
           <p className="text-sm font-medium text-foreground">Revisei os dados e quero criar a conta agora</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            O teste grátis de 14 dias será iniciado assim que a conta for criada.
+            O teste grátis de 14 dias começa assim que a conta for criada.
           </p>
         </div>
       </button>

@@ -22,7 +22,7 @@ export function MobileNav() {
       <SheetContent side="left" className="max-w-xs bg-[#fffaf9]">
         <div className="mb-6">
           <AppLogo className="w-[170px]" />
-          <p className="mt-2 text-sm text-muted-foreground">Seu salão, sua agenda, seu controle.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Gestão diária do salão em um só lugar.</p>
         </div>
         <nav className="space-y-1">
           {navigationItems.map((item) => {

@@ -68,9 +68,9 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
     ? isTrialing
       ? "Teste grátis em andamento"
       : overview.currentSubscription.plan.name
-    : "Escolha um plano para cobrar seus salões";
+    : "Escolha um plano";
   const nextBillingText = useMemo(() => {
-    if (!overview.currentSubscription) return "Ainda não existe assinatura ativa.";
+    if (!overview.currentSubscription) return "Selecione um plano para iniciar a cobrança.";
     if (overview.currentSubscription.cancelAtPeriodEnd) {
       return `Encerramento programado para ${formatDateTime(overview.currentSubscription.currentPeriodEnd, "dd/MM/yyyy")}.`;
     }
@@ -132,15 +132,15 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <Badge variant={overview.currentSubscription ? statusVariantMap[overview.currentSubscription.status] : "outline"}>
-                {overview.currentSubscription ? statusLabelMap[overview.currentSubscription.status] : "Sem assinatura ativa"}
+                {overview.currentSubscription ? statusLabelMap[overview.currentSubscription.status] : "Sem plano ativo"}
               </Badge>
               <h2 className="mt-4 font-heading text-3xl text-foreground">{heroTitle}</h2>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                 {overview.currentSubscription
                   ? isTrialing
-                    ? `A organização ${overview.organization.name} está usando o BellaPro em modo de teste. ${nextBillingText}`
-                    : `Plano atual da organização ${overview.organization.name}. ${nextBillingText}`
-                  : "Ative a cobrança recorrente via Stripe Checkout. O BellaPro sincroniza o status da assinatura por webhook."}
+                    ? `${overview.organization.name} está no teste grátis. ${nextBillingText}`
+                    : `${nextBillingText}`
+                  : "Escolha o plano que melhor acompanha o ritmo do salão."}
               </p>
             </div>
             {overview.currentSubscription && !isTrialing ? (
@@ -163,21 +163,21 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
                   ? isTrialing
                     ? "Teste ativo"
                     : statusLabelMap[overview.currentSubscription.status]
-                  : "Sem assinatura"
+                  : "Sem plano"
               }
               helper={nextBillingText}
             />
             <SummaryTile
               icon={ShieldCheck}
-              label="Cliente Stripe"
-              value={overview.organization.stripeCustomerId ? "Conectado" : "Ainda não criado"}
-              helper={overview.organization.email || "Sem e-mail comercial definido"}
+              label="Cobrança"
+              value={overview.organization.stripeCustomerId ? "Cadastro pronto" : "Cadastro pendente"}
+              helper={overview.organization.email || "Defina um e-mail comercial em Configurações"}
             />
             <SummaryTile
               icon={Sparkles}
               label="Portal da cobrança"
-              value={canOpenPortal ? "Disponível" : "Liberado após o primeiro checkout"}
-              helper="Cartão, faturas e cancelamento ficam por conta da Stripe."
+              value={canOpenPortal ? "Disponível" : "Disponível após a assinatura"}
+              helper="Cartão, faturas e renovação ficam centralizados aqui."
             />
           </div>
         </div>
@@ -186,8 +186,8 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
           <h3 className="text-lg font-semibold text-foreground">Ações de cobrança</h3>
           <p className="mt-2 text-sm text-muted-foreground">
             {isTrialing
-              ? "Seu período de teste está ativo. Escolha um dos planos abaixo para iniciar a cobrança recorrente antes do vencimento."
-              : "Use o checkout para novas assinaturas e o portal da Stripe para gerenciar cartão, faturas e cancelamento."}
+              ? "Escolha um plano para seguir com a cobrança ao fim do teste."
+              : "Gerencie assinatura, cartão e faturas por aqui."}
           </p>
 
           <div className="mt-6 space-y-3">
@@ -209,7 +209,7 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
       <section className="space-y-4">
         <div>
           <h3 className="text-lg font-semibold text-foreground">Planos disponíveis</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Cada plano local precisa estar vinculado a um Price da Stripe para liberar o checkout.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Escolha o plano ideal para o momento do salão.</p>
         </div>
 
         <div className="grid gap-4 xl:grid-cols-3">
@@ -222,7 +222,7 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-lg font-semibold text-foreground">{plan.name}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{plan.description || "Plano sem descrição definida."}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{plan.description || "Plano disponível para contratação."}</p>
                   </div>
                   {isCurrent ? <Badge variant="success">Plano atual</Badge> : null}
                 </div>
@@ -242,7 +242,7 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
                     }
                   />
                   <FeatureRow
-                    label={plan.stripePriceId ? "Price Stripe vinculado" : "Plano ainda sem vínculo com a Stripe"}
+                    label={plan.stripePriceId ? "Cobrança online pronta" : "Configuração de cobrança pendente"}
                     danger={!plan.stripePriceId}
                   />
                 </div>

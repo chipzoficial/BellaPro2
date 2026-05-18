@@ -91,12 +91,12 @@ export function DashboardOverview({
                     Ritmo do dia
                   </Badge>
                   <h2 className="mt-4 font-heading text-3xl leading-tight text-foreground">
-                    {data.nextAppointment ? "Próximo atendimento" : "Painel do salão pronto para agir"}
+                    {data.nextAppointment ? "Próximo atendimento" : "Visão do salão"}
                   </h2>
                   <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                     {data.nextAppointment
-                      ? `${nextAppointmentLabel} com ${data.nextAppointment.professional.name}. Use o painel para confirmar, encaixar ou antecipar a próxima movimentação do dia.`
-                      : "Sem agendamento futuro neste momento. Aproveite para organizar a agenda, revisar pendências e divulgar o link público."}
+                      ? `${nextAppointmentLabel} com ${data.nextAppointment.professional.name}.`
+                      : "Sem agendamentos futuros neste momento."}
                   </p>
                 </div>
                 {data.nextAppointment ? <StatusBadge status={data.nextAppointment.status} /> : null}
@@ -119,7 +119,7 @@ export function DashboardOverview({
                   icon={CircleDollarSign}
                   label="Ticket médio"
                   value={formatMoney(data.metrics.month.ticketAverage)}
-                  helper="Somente atendimentos concluídos"
+                  helper="Média dos atendimentos concluídos"
                 />
                 <QuickStat
                   icon={Scissors}
@@ -143,7 +143,7 @@ export function DashboardOverview({
                 <p className="text-sm text-muted-foreground">
                   {data.nextAppointment
                     ? `${data.nextAppointment.service.name} com ${data.nextAppointment.professional.name}`
-                    : "Agenda vazia no momento. Crie um atendimento ou abra o link público."}
+                    : "Sem agendamentos no momento."}
                 </p>
               </div>
 
@@ -151,7 +151,7 @@ export function DashboardOverview({
                 <InfoRow
                   icon={Clock3}
                   label="Próximo horário"
-                  value={data.nextAppointment ? formatDateTime(data.nextAppointment.startAt) : "Sem horário marcado"}
+                  value={data.nextAppointment ? formatDateTime(data.nextAppointment.startAt) : "Nenhum horário definido"}
                 />
                 <InfoRow
                   icon={CalendarDays}
@@ -294,7 +294,7 @@ function InfoRow({
 
 function TodayTimeline({ items }: { items: AppointmentItem[] }) {
   if (!items.length) {
-    return <EmptyState title="Agenda tranquila hoje" description="Nenhum agendamento encontrado para hoje." />;
+    return <EmptyState title="Sem horários hoje" description="Os agendamentos de hoje aparecerão aqui." />;
   }
 
   return (
@@ -325,7 +325,7 @@ function TodayTimeline({ items }: { items: AppointmentItem[] }) {
 
 function UpcomingList({ items }: { items: AppointmentItem[] }) {
   if (!items.length) {
-    return <EmptyState title="Sem próximos agendamentos" description="Os próximos horários confirmados aparecerão aqui." />;
+    return <EmptyState title="Sem próximos agendamentos" description="Os próximos horários aparecerão aqui." />;
   }
 
   return (
@@ -361,7 +361,7 @@ function ProfessionalsPanel({
   }>;
 }) {
   if (!items.length) {
-    return <EmptyState title="Sem profissionais ativos" description="Cadastre profissionais para acompanhar a carga do dia." />;
+    return <EmptyState title="Sem profissionais ativos" description="Adicione profissionais para acompanhar a rotina do salão." />;
   }
 
   return (
@@ -390,7 +390,7 @@ function ProfessionalsPanel({
 
 function TopServicesPanel({ items }: { items: Array<{ name: string; count: number; revenue: number }> }) {
   if (!items.length) {
-    return <EmptyState title="Sem serviços vendidos no mês" description="Os serviços concluídos começarão a aparecer aqui." />;
+    return <EmptyState title="Sem serviços no ranking" description="As vendas do mês aparecerão aqui." />;
   }
 
   return (
@@ -419,7 +419,7 @@ function AlertsPanel({
   items: Array<{ tone: "default" | "warning" | "danger"; title: string; description: string }>;
 }) {
   if (!items.length) {
-    return <EmptyState title="Tudo sob controle" description="Nenhum alerta crítico apareceu na operação por enquanto." />;
+    return <EmptyState title="Tudo em ordem" description="Nenhum ponto urgente apareceu agora." />;
   }
 
   const toneClassMap = {

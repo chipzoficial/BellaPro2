@@ -108,8 +108,8 @@ export function ClientesPage({
               {filtered.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell className="font-medium">{client.name}</TableCell>
-                  <TableCell>{client.phone || client.email || "Não informado"}</TableCell>
-                  <TableCell className="max-w-xs truncate">{client.notes || "Sem observações"}</TableCell>
+                  <TableCell>{client.phone || client.email || "—"}</TableCell>
+                  <TableCell className="max-w-xs truncate">{client.notes || "—"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button type="button" variant="ghost" onClick={() => editClient(client)}>
@@ -130,11 +130,11 @@ export function ClientesPage({
       </section>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{form.getValues("id") ? "Editar cliente" : "Novo cliente"}</DialogTitle>
-            <DialogDescription>Cadastre ou ajuste os dados do cliente sem poluir a tela de listagem.</DialogDescription>
-          </DialogHeader>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{form.getValues("id") ? "Editar cliente" : "Novo cliente"}</DialogTitle>
+            <DialogDescription>Cadastre ou ajuste os dados do cliente.</DialogDescription>
+            </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField control={form.control} name="name" render={({ field }) => <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>} />

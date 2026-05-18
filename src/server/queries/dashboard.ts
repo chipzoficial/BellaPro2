@@ -155,7 +155,7 @@ export async function getDashboardData(organizationId: string) {
       ? {
           tone: "default" as const,
           title: `${professionalsWithoutServices.length} profissional${professionalsWithoutServices.length > 1 ? "is" : ""} sem serviços vinculados`,
-          description: "Revise os cadastros para evitar bloqueios ao criar novos agendamentos.",
+          description: "Revise o cadastro para liberar a agenda completa da equipe.",
         }
       : null,
     professionalsWithoutHours.length
@@ -181,7 +181,7 @@ export async function getDashboardData(organizationId: string) {
       return acc;
     }, {});
     const winner = Object.entries(dayBuckets).sort((a, b) => b[1] - a[1])[0];
-    if (!winner) return "Sem volume suficiente";
+    if (!winner) return "Sem movimento relevante";
     return `${winner[0][0].toUpperCase()}${winner[0].slice(1)} com ${winner[1]} agendamento${winner[1] > 1 ? "s" : ""}`;
   })();
 
