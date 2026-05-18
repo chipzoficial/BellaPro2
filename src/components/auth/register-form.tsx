@@ -514,8 +514,14 @@ function ProfessionalsStep({
           const selectedByProfessional = professionals?.[index]?.serviceKeys ?? [];
 
           return (
-            <div key={item.id} className="rounded-[24px] border border-border bg-[#fffaf9] px-5 py-5">
-              <div className="mb-4">
+            <div
+              key={item.id}
+              className={cn(
+                "space-y-5",
+                index > 0 && "border-t border-border pt-6"
+              )}
+            >
+              <div>
                 <p className="text-sm font-medium text-muted-foreground">Profissional {index + 1}</p>
               </div>
 
@@ -555,12 +561,12 @@ function ProfessionalsStep({
                             </button>
                           );
                         })}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
             </div>
           );
         })}
