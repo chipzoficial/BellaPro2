@@ -17,12 +17,12 @@ export function Sidebar({
   } | null;
 }) {
   return (
-    <aside className="hidden w-72 shrink-0 border-r border-border bg-[#fffaf9] px-5 py-6 lg:flex lg:flex-col">
+    <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-r border-border bg-[#fffaf9] px-5 py-6 lg:flex lg:flex-col">
       <div className="mb-8">
         <AppLogo className="w-[170px]" />
         <p className="mt-2 text-sm text-muted-foreground">Gestão e agendamento para salões de beleza.</p>
       </div>
-      <nav className="space-y-1">
+      <nav className="space-y-1 overflow-y-auto">
         {navigationItems.map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href;
