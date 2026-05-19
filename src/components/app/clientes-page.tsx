@@ -9,6 +9,16 @@ import { clientSchema } from "@/lib/validations/entities";
 import { deleteClient, upsertClient } from "@/server/actions/domain";
 import { SearchInput } from "@/components/shared/search-input";
 import { StatusBadge } from "@/components/shared/status-badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -49,6 +59,7 @@ export function ClientesPage({
   const [open, setOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [pendingRemoval, setPendingRemoval] = useState<{ id: string; name: string } | null>(null);
   const [isPending, startTransition] = useTransition();
   const form = useForm<ClientInput>({
     resolver: zodResolver(clientSchema),
@@ -145,7 +156,12 @@ export function ClientesPage({
                       <Button type="button" variant="outline" className="flex-1" onClick={() => editClient(client)}>
                         Editar
                       </Button>
-                      <Button type="button" variant="ghost" className="flex-1" onClick={() => removeClient(client.id)}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="flex-1"
+                        onClick={() => setPendingRemoval({ id: client.id, name: client.name })}
+                      >
                         Remover
                       </Button>
                     </div>
@@ -186,7 +202,11 @@ export function ClientesPage({
                       <Button type="button" variant="ghost" onClick={() => editClient(client)}>
                         Editar
                       </Button>
-                      <Button type="button" variant="ghost" onClick={() => removeClient(client.id)}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => setPendingRemoval({ id: client.id, name: client.name })}
+                      >
                         Remover
                       </Button>
                     </div>
@@ -236,6 +256,31 @@ export function ClientesPage({
           ) : null}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={Boolean(pendingRemoval)} onOpenChange={(open) => !open && setPendingRemoval(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover cliente</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingRemoval
+                ? `Deseja remover ${pendingRemoval.name}? Os atendimentos passados serão preservados no histórico e no financeiro.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingRemoval) return;
+                removeClient(pendingRemoval.id);
+                setPendingRemoval(null);
+              }}
+            >
+              Remover cliente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
