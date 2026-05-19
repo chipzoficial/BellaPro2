@@ -1,6 +1,7 @@
 "use server";
 
 import { AppointmentStatus, Role } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { addMinutes } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -207,6 +208,9 @@ export async function deleteClient(id: string): Promise<ActionState> {
     revalidatePath("/app/clientes");
     return ok("Cliente removido com sucesso.");
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+      return fail("Esse cliente já possui agendamentos vinculados e não pode ser removido.");
+    }
     return fail(error instanceof Error ? error.message : "Erro ao remover cliente.");
   }
 }
