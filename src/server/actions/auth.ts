@@ -40,6 +40,8 @@ export async function loginAction(input: unknown): Promise<ActionState> {
   if (!user.isActive) return fail("Usuário inativo.");
   if (!user.memberships.length) return fail("Sua conta não possui acesso a nenhum salão.");
 
+  const hasOnlyGlobalAdminMemberships = user.memberships.every((membership) => membership.role === Role.ADMIN_GLOBAL);
+
   await createSession({
     userId: user.id,
     activeOrganizationId: user.memberships.length === 1 ? user.memberships[0].organizationId : undefined,
@@ -47,7 +49,7 @@ export async function loginAction(input: unknown): Promise<ActionState> {
 
   return {
     success: true,
-    message: user.memberships.length === 1 ? "/app" : "/selecionar-salao",
+    message: hasOnlyGlobalAdminMemberships ? "/admin" : user.memberships.length === 1 ? "/app" : "/selecionar-salao",
   };
 }
 

@@ -1,3 +1,5 @@
+import { Role } from "@prisma/client";
+import { redirect } from "next/navigation";
 import { getCurrentMembership, requireUser } from "@/lib/auth/session";
 import { getSubscriptionNotice } from "@/lib/billing";
 import { AuthenticatedShell } from "@/components/layout/authenticated-shell";
@@ -5,6 +7,11 @@ import { AuthenticatedShell } from "@/components/layout/authenticated-shell";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   const membership = await getCurrentMembership();
+
+  if (membership.role === Role.ADMIN_GLOBAL) {
+    redirect("/admin");
+  }
+
   const subscriptionNotice = await getSubscriptionNotice(membership.organizationId);
 
   return (

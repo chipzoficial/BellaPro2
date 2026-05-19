@@ -20,7 +20,7 @@ export default async function AdminSaloesPage() {
   const organizations = await getAdminOrganizations();
 
   return (
-    <div className="space-y-8 p-6 md:p-8">
+    <div className="space-y-8">
       <PageHeader title="Salões" description="Acompanhe o uso e o status comercial de cada conta." />
 
       <section className="rounded-3xl border border-border bg-white p-5 md:p-6">

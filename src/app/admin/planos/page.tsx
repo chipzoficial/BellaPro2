@@ -10,7 +10,7 @@ export default async function AdminPlanosPage() {
   const plans = await getAdminPlans();
 
   return (
-    <div className="space-y-8 p-6 md:p-8">
+    <div className="space-y-8">
       <PageHeader title="Planos" description="Leia adesão, cobrança e limites da estrutura comercial do BellaPro." />
 
       <section className="rounded-3xl border border-border bg-white p-5 md:p-6">

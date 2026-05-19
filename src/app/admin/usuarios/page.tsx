@@ -11,7 +11,7 @@ export default async function AdminUsuariosPage() {
   const users = await getAdminUsers();
 
   return (
-    <div className="space-y-8 p-6 md:p-8">
+    <div className="space-y-8">
       <PageHeader title="Usuários" description="Leitura rápida de acesso, vínculo e função na plataforma." />
 
       <section className="rounded-3xl border border-border bg-white p-5 md:p-6">

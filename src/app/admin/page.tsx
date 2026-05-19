@@ -22,7 +22,7 @@ export default async function AdminPage() {
   const data = await getAdminOverview();
 
   return (
-    <div className="space-y-8 p-6 md:p-8">
+    <div className="space-y-8">
       <PageHeader
         title="Admin BellaPro"
         description="Leitura rápida da operação da plataforma."
