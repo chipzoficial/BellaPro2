@@ -7,6 +7,7 @@ import { z } from "zod";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { enforceAppointmentLimit, enforceProfessionalLimit } from "@/lib/billing";
 import { db } from "@/lib/db";
+import { sendAppointmentStatusEmail, sendBookingReceivedEmail } from "@/lib/email";
 import { getAvailableOrganizationSlug } from "@/lib/organization-slug";
 import { canAccess } from "@/lib/permissions";
 import { getAvailableSlots, buildStartDate } from "@/lib/availability";
@@ -413,10 +414,29 @@ export async function upsertAppointment(input: unknown): Promise<ActionState> {
 export async function updateAppointmentStatus(id: string, status: AppointmentStatus): Promise<ActionState> {
   try {
     const membership = await requireScope("appointments");
-    await db.appointment.update({
+    const appointment = await db.appointment.update({
       where: { id, organizationId: membership.organizationId },
       data: { status },
+      include: {
+        client: true,
+        professional: true,
+        service: true,
+        organization: true,
+      },
     });
+
+    if (appointment.client.email) {
+      await sendAppointmentStatusEmail({
+        to: appointment.client.email,
+        clientName: appointment.client.name,
+        organizationName: appointment.organization.name,
+        serviceName: appointment.service.name,
+        professionalName: appointment.professional.name,
+        startAt: appointment.startAt,
+        status,
+      });
+    }
+
     revalidatePath("/app/agenda");
     revalidatePath("/app/agendamentos");
     revalidatePath("/app/financeiro");
@@ -567,7 +587,7 @@ export async function createPublicBooking(input: unknown): Promise<ActionState> 
       },
     });
 
-    await db.appointment.create({
+    const appointment = await db.appointment.create({
       data: {
         organizationId: organization.id,
         clientId: client.id,
@@ -580,6 +600,18 @@ export async function createPublicBooking(input: unknown): Promise<ActionState> 
         notes: data.notes || null,
       },
     });
+
+    if (client.email) {
+      await sendBookingReceivedEmail({
+        to: client.email,
+        clientName: client.name,
+        organizationName: organization.name,
+        serviceName: service.name,
+        professionalName: selectedSlot.professionalName,
+        startAt: appointment.startAt,
+        priceInCents: service.priceInCents,
+      });
+    }
 
     revalidatePath(`/${organization.slug}`);
     return ok("Agendamento solicitado com sucesso.");

@@ -1,4 +1,6 @@
 import { absoluteAppUrl } from "@/lib/utils";
+import { formatDateTime, formatMoney } from "@/lib/utils";
+import { AppointmentStatus } from "@prisma/client";
 
 const resendApiUrl = "https://api.resend.com/emails";
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -105,6 +107,118 @@ export async function sendPasswordResetEmail(options: {
         <p>Se preferir, copie e cole este link no navegador:</p>
         <p>${resetUrl}</p>
         <p>Se você não solicitou essa alteração, ignore este e-mail.</p>
+      </div>
+    `,
+  });
+}
+
+export async function sendBookingReceivedEmail(options: {
+  to: string;
+  clientName: string;
+  organizationName: string;
+  serviceName: string;
+  professionalName: string;
+  startAt: Date;
+  priceInCents: number;
+}) {
+  const appointmentDate = formatDateTime(options.startAt, "dd/MM/yyyy 'às' HH:mm");
+  const priceLabel = formatMoney(options.priceInCents);
+
+  return sendEmail({
+    to: options.to,
+    subject: `Recebemos seu agendamento no ${options.organizationName}`,
+    text: [
+      `Olá, ${options.clientName}.`,
+      "",
+      `Recebemos seu pedido de agendamento no ${options.organizationName}.`,
+      `${options.serviceName} com ${options.professionalName}`,
+      `${appointmentDate}`,
+      `Valor previsto: ${priceLabel}`,
+      "",
+      "O salão ainda pode confirmar esse horário antes do atendimento.",
+    ].join("\n"),
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #2b171d;">
+        <p>Olá, ${options.clientName}.</p>
+        <p>Recebemos seu pedido de agendamento no <strong>${options.organizationName}</strong>.</p>
+        <p>
+          <strong>${options.serviceName}</strong><br />
+          com ${options.professionalName}<br />
+          ${appointmentDate}<br />
+          Valor previsto: ${priceLabel}
+        </p>
+        <p>O salão ainda pode confirmar esse horário antes do atendimento.</p>
+      </div>
+    `,
+  });
+}
+
+export async function sendAppointmentStatusEmail(options: {
+  to: string;
+  clientName: string;
+  organizationName: string;
+  serviceName: string;
+  professionalName: string;
+  startAt: Date;
+  status: AppointmentStatus;
+}) {
+  const appointmentDate = formatDateTime(options.startAt, "dd/MM/yyyy 'às' HH:mm");
+
+  const statusContentMap: Partial<
+    Record<
+      AppointmentStatus,
+      {
+        subject: string;
+        title: string;
+        body: string;
+      }
+    >
+  > = {
+    [AppointmentStatus.CONFIRMED]: {
+      subject: `Seu horário foi confirmado no ${options.organizationName}`,
+      title: "Seu horário foi confirmado",
+      body: "Seu atendimento está confirmado e reservado para você.",
+    },
+    [AppointmentStatus.CANCELED]: {
+      subject: `Seu horário foi cancelado no ${options.organizationName}`,
+      title: "Seu horário foi cancelado",
+      body: "Se precisar, entre em contato com o salão para remarcar.",
+    },
+    [AppointmentStatus.NO_SHOW]: {
+      subject: `Atualização do seu horário no ${options.organizationName}`,
+      title: "Seu atendimento foi marcado como falta",
+      body: "Se isso não estiver correto, fale com o salão para ajustar.",
+    },
+  };
+
+  const content = statusContentMap[options.status];
+
+  if (!content) {
+    return { success: false as const, skipped: true as const };
+  }
+
+  return sendEmail({
+    to: options.to,
+    subject: content.subject,
+    text: [
+      `Olá, ${options.clientName}.`,
+      "",
+      `${content.title}.`,
+      `${options.serviceName} com ${options.professionalName}`,
+      `${appointmentDate}`,
+      "",
+      content.body,
+    ].join("\n"),
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #2b171d;">
+        <p>Olá, ${options.clientName}.</p>
+        <p><strong>${content.title}</strong></p>
+        <p>
+          ${options.serviceName}<br />
+          com ${options.professionalName}<br />
+          ${appointmentDate}
+        </p>
+        <p>${content.body}</p>
       </div>
     `,
   });
