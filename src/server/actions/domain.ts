@@ -6,6 +6,7 @@ import { addMinutes } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
+import { getAppointmentClientName } from "@/lib/appointment-client";
 import { enforceAppointmentLimit, enforceProfessionalLimit } from "@/lib/billing";
 import { db } from "@/lib/db";
 import { sendAppointmentStatusEmail, sendBookingReceivedEmail } from "@/lib/email";
@@ -73,7 +74,12 @@ async function resolveAppointmentClient(params: {
         });
       }
 
-      return existingById.id;
+      return {
+        id: existingById.id,
+        name: normalizedName,
+        phone: shouldUpdatePhone ? normalizedPhone : existingById.phone,
+        email: shouldUpdateEmail ? normalizedEmail : existingById.email,
+      };
     }
   }
 
@@ -128,7 +134,12 @@ async function resolveAppointmentClient(params: {
       });
     }
 
-    return existingClient.id;
+    return {
+      id: existingClient.id,
+      name: normalizedName,
+      phone: shouldUpdatePhone ? normalizedPhone : existingClient.phone,
+      email: shouldUpdateEmail ? normalizedEmail : existingClient.email,
+    };
   }
 
   const newClient = await db.client.create({
@@ -141,7 +152,12 @@ async function resolveAppointmentClient(params: {
     },
   });
 
-  return newClient.id;
+  return {
+    id: newClient.id,
+    name: newClient.name,
+    phone: newClient.phone,
+    email: newClient.email,
+  };
 }
 
 async function requireScope(resource: "clients" | "professionals" | "services" | "appointments" | "settings" | "financial") {
@@ -202,10 +218,32 @@ export async function upsertClient(input: unknown): Promise<ActionState> {
 export async function deleteClient(id: string): Promise<ActionState> {
   try {
     const membership = await requireScope("clients");
+    const futureAppointmentsCount = await db.appointment.count({
+      where: {
+        organizationId: membership.organizationId,
+        clientId: id,
+        startAt: {
+          gte: new Date(),
+        },
+        status: {
+          in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED],
+        },
+      },
+    });
+
+    if (futureAppointmentsCount > 0) {
+      return fail("Esse cliente possui agendamentos futuros e não pode ser removido.");
+    }
+
     await db.client.delete({
       where: { id, organizationId: membership.organizationId },
     });
     revalidatePath("/app/clientes");
+    revalidatePath("/app/agendamentos");
+    revalidatePath("/app/historico");
+    revalidatePath("/app/agenda");
+    revalidatePath("/app");
+    revalidatePath("/app/financeiro");
     return ok("Cliente removido com sucesso.");
   } catch (error) {
     if (
@@ -406,7 +444,7 @@ export async function upsertAppointment(input: unknown): Promise<ActionState> {
       currentAppointmentId: data.id,
     });
 
-    const clientId = await resolveAppointmentClient({
+    const client = await resolveAppointmentClient({
       organizationId: membership.organizationId,
       clientId: data.clientId || undefined,
       clientName: data.clientName,
@@ -430,7 +468,9 @@ export async function upsertAppointment(input: unknown): Promise<ActionState> {
       await db.appointment.update({
         where: { id: data.id, organizationId: membership.organizationId },
         data: {
-          clientId,
+          clientId: client.id,
+          clientNameSnapshot: client.name,
+          clientPhoneSnapshot: client.phone,
           professionalId: professional.id,
           serviceId: service.id,
           startAt,
@@ -444,7 +484,9 @@ export async function upsertAppointment(input: unknown): Promise<ActionState> {
       await db.appointment.create({
         data: {
           organizationId: membership.organizationId,
-          clientId,
+          clientId: client.id,
+          clientNameSnapshot: client.name,
+          clientPhoneSnapshot: client.phone,
           professionalId: professional.id,
           serviceId: service.id,
           startAt,
@@ -479,7 +521,7 @@ export async function updateAppointmentStatus(id: string, status: AppointmentSta
       },
     });
 
-    if (appointment.client.email) {
+    if (appointment.client?.email) {
       await sendAppointmentStatusEmail({
         to: appointment.client.email,
         clientName: appointment.client.name,
@@ -631,7 +673,7 @@ export async function createPublicBooking(input: unknown): Promise<ActionState> 
     });
     if (!service) return fail("Serviço inválido.");
 
-    const clientId = await resolveAppointmentClient({
+    const client = await resolveAppointmentClient({
       organizationId: organization.id,
       clientName: data.name,
       clientPhone: data.phone || undefined,
@@ -639,18 +681,12 @@ export async function createPublicBooking(input: unknown): Promise<ActionState> 
       clientNotes: data.notes || undefined,
     });
 
-    const client = await db.client.findUnique({
-      where: { id: clientId },
-    });
-
-    if (!client) {
-      return fail("Cliente inválido.");
-    }
-
     const appointment = await db.appointment.create({
       data: {
         organizationId: organization.id,
         clientId: client.id,
+        clientNameSnapshot: client.name,
+        clientPhoneSnapshot: client.phone,
         professionalId: selectedSlot.professionalId,
         serviceId: service.id,
         startAt,
@@ -773,7 +809,7 @@ export async function createBlockedTime(input: unknown): Promise<ActionState> {
       const conflict = conflictingAppointments[0];
       return fail(
         data.professionalId
-          ? `Já existe um atendimento de ${conflict.client.name} nesse horário para ${conflict.professional.name}.`
+          ? `Já existe um atendimento de ${getAppointmentClientName(conflict)} nesse horário para ${conflict.professional.name}.`
           : "Já existe atendimento marcado nesse período. Ajuste a agenda antes de bloquear esse horário."
       );
     }
@@ -870,7 +906,7 @@ export async function updateProfessionalBusinessHours(input: unknown): Promise<A
 
       if (!allowedRange) {
         return fail(
-          `Existe atendimento futuro de ${appointment.client.name} em um dia que ficará indisponível para esse profissional.`
+          `Existe atendimento futuro de ${getAppointmentClientName(appointment)} em um dia que ficará indisponível para esse profissional.`
         );
       }
 
@@ -879,7 +915,7 @@ export async function updateProfessionalBusinessHours(input: unknown): Promise<A
 
       if (appointmentStart < allowedRange.startTime || appointmentEnd > allowedRange.endTime) {
         return fail(
-          `Existe atendimento futuro de ${appointment.client.name} fora do novo horário configurado para esse profissional.`
+          `Existe atendimento futuro de ${getAppointmentClientName(appointment)} fora do novo horário configurado para esse profissional.`
         );
       }
     }

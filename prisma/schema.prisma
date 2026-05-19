@@ -164,7 +164,9 @@ model Client {
 model Appointment {
   id                 String            @id @default(cuid())
   organizationId     String
-  clientId           String
+  clientId           String?
+  clientNameSnapshot String
+  clientPhoneSnapshot String?
   professionalId     String
   serviceId          String
   startAt            DateTime
@@ -174,7 +176,7 @@ model Appointment {
   notes              String?
   cancellationReason String?
   organization       Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  client             Client            @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  client             Client?           @relation(fields: [clientId], references: [id], onDelete: SetNull)
   professional       Professional      @relation(fields: [professionalId], references: [id], onDelete: Restrict)
   service            Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict)
   createdAt          DateTime          @default(now())

@@ -33,6 +33,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { createBlockedTime, deleteBlockedTime, updateAppointmentStatus } from "@/server/actions/domain";
+import { getAppointmentClientName } from "@/lib/appointment-client";
 import { cn, formatDateTime } from "@/lib/utils";
 import { StatusBadge } from "@/components/shared/status-badge";
 import {
@@ -63,7 +64,8 @@ type AgendaAppointment = {
   status: AppointmentStatus;
   notes: string | null;
   cancellationReason?: string | null;
-  client: { name: string };
+  client: { name: string } | null;
+  clientNameSnapshot: string;
   professional: { id: string; name: string };
   service: { name: string };
 };
@@ -413,7 +415,7 @@ export function AgendaWorkspace({
                       <StatusBadge status={item.status} />
                     </div>
                     <div>
-                      <p className="font-medium">{item.client.name}</p>
+                      <p className="font-medium">{getAppointmentClientName(item)}</p>
                       <p className="text-sm text-muted-foreground">
                         {item.service.name} com {item.professional.name}
                       </p>
@@ -560,7 +562,7 @@ export function AgendaWorkspace({
                               <div className="min-w-0 flex-1">
                                 <p className="truncate text-sm font-semibold text-foreground">
                                   {format(appointment.startAt, "HH:mm")} - {format(appointment.endAt, "HH:mm")}{" "}
-                                  <span className="text-muted-foreground">-</span> {appointment.client.name}
+                                  <span className="text-muted-foreground">-</span> {getAppointmentClientName(appointment)}
                                 </p>
                                 <p className="mt-1 truncate text-xs text-muted-foreground">
                                   {appointment.service.name} <span className="text-muted-foreground">-</span>{" "}
@@ -738,7 +740,7 @@ export function AgendaWorkspace({
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm text-muted-foreground">Cliente</p>
-                      <p className="text-lg font-semibold">{selectedAppointment.client.name}</p>
+                      <p className="text-lg font-semibold">{getAppointmentClientName(selectedAppointment)}</p>
                     </div>
                     <StatusBadge status={selectedAppointment.status} />
                   </div>

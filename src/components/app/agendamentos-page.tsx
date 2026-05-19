@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getAppointmentClientName, getAppointmentClientPhone } from "@/lib/appointment-client";
 import { cn, formatDateTime } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 
@@ -260,7 +261,7 @@ export function AgendamentosPage({
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-brand-800">{formatDateTime(item.startAt)}</p>
-                  <p className="mt-2 font-medium text-foreground">{item.client.name}</p>
+                  <p className="mt-2 font-medium text-foreground">{getAppointmentClientName(item)}</p>
                   <p className="mt-1 text-sm text-muted-foreground">{item.service.name}</p>
                 </div>
                 <StatusBadge status={item.status} />
@@ -281,9 +282,9 @@ export function AgendamentosPage({
                     form.reset({
                       id: item.id,
                       clientMode: "existing",
-                      clientId: item.clientId,
-                      clientName: item.client.name,
-                      clientPhone: item.client.phone ?? "",
+                      clientId: item.clientId ?? "",
+                      clientName: getAppointmentClientName(item),
+                      clientPhone: getAppointmentClientPhone(item) ?? "",
                       professionalId: item.professionalId,
                       serviceId: item.serviceId,
                       startAt: new Date(item.startAt).toISOString(),
@@ -339,7 +340,7 @@ export function AgendamentosPage({
                   return (
                     <>
                 <TableCell>{formatDateTime(item.startAt)}</TableCell>
-                <TableCell>{item.client.name}</TableCell>
+                <TableCell>{getAppointmentClientName(item)}</TableCell>
                 <TableCell>{item.service.name}</TableCell>
                 <TableCell><StatusBadge status={item.status} /></TableCell>
                 <TableCell className="text-right">
@@ -355,9 +356,9 @@ export function AgendamentosPage({
                       form.reset({
                         id: item.id,
                         clientMode: "existing",
-                        clientId: item.clientId,
-                        clientName: item.client.name,
-                        clientPhone: item.client.phone ?? "",
+                        clientId: item.clientId ?? "",
+                        clientName: getAppointmentClientName(item),
+                        clientPhone: getAppointmentClientPhone(item) ?? "",
                         professionalId: item.professionalId,
                         serviceId: item.serviceId,
                         startAt: new Date(item.startAt).toISOString(),

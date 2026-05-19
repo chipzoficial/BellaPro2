@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { getAppointmentClientName } from "@/lib/appointment-client";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 
@@ -9,7 +10,8 @@ export function TodayAppointments({
   items: Array<{
     id: string;
     startAt: Date;
-    client: { name: string };
+    client: { name: string } | null;
+    clientNameSnapshot: string;
     professional: { name: string };
     service: { name: string };
     status: import("@prisma/client").AppointmentStatus;
@@ -27,7 +29,7 @@ export function TodayAppointments({
             {format(item.startAt, "HH:mm", { locale: ptBR })}
           </div>
           <div>
-            <p className="font-medium">{item.client.name}</p>
+            <p className="font-medium">{getAppointmentClientName(item)}</p>
             <p className="text-sm text-muted-foreground">
               {item.service.name} com {item.professional.name}
             </p>

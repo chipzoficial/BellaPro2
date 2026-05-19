@@ -219,6 +219,8 @@ async function main() {
     return {
       organizationId: organization.id,
       clientId: client.id,
+      clientNameSnapshot: client.name,
+      clientPhoneSnapshot: client.phone,
       professionalId: professional.id,
       serviceId: linkedService.id,
       startAt,

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/components/ui/use-toast";
+import { getAppointmentClientName } from "@/lib/appointment-client";
 
 const historyFilters = [
   { value: "all", label: "Todos" },
@@ -108,7 +109,7 @@ export function HistoricoPage({
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-brand-800">{formatDateTime(item.startAt)}</p>
-                      <p className="mt-2 font-medium text-foreground">{item.client.name}</p>
+                      <p className="mt-2 font-medium text-foreground">{getAppointmentClientName(item)}</p>
                       <p className="mt-1 text-sm text-muted-foreground">{item.service.name}</p>
                     </div>
                     <StatusBadge status={item.status} />
@@ -167,7 +168,7 @@ export function HistoricoPage({
                   return (
                     <TableRow key={item.id}>
                       <TableCell>{formatDateTime(item.startAt)}</TableCell>
-                      <TableCell>{item.client.name}</TableCell>
+                      <TableCell>{getAppointmentClientName(item)}</TableCell>
                       <TableCell>{item.service.name}</TableCell>
                       <TableCell><StatusBadge status={item.status} /></TableCell>
                       <TableCell className="w-[220px]">

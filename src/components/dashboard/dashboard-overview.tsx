@@ -20,6 +20,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { getAppointmentClientName } from "@/lib/appointment-client";
 import { formatDateTime, formatMoney } from "@/lib/utils";
 
 type AppointmentItem = {
@@ -27,7 +28,8 @@ type AppointmentItem = {
   startAt: Date;
   endAt: Date;
   status: AppointmentStatus;
-  client: { name: string };
+  client: { name: string } | null;
+  clientNameSnapshot: string;
   professional: { name: string };
   service: { name: string };
 };
@@ -76,7 +78,7 @@ export function DashboardOverview({
 }) {
   const publicUrl = new URL(`/${data.organization.slug}`, publicBaseUrl).toString();
   const nextAppointmentLabel = data.nextAppointment
-    ? `${format(data.nextAppointment.startAt, "HH:mm", { locale: ptBR })} - ${data.nextAppointment.client.name}`
+    ? `${format(data.nextAppointment.startAt, "HH:mm", { locale: ptBR })} - ${getAppointmentClientName(data.nextAppointment)}`
     : "Sem próximos atendimentos";
 
   return (
@@ -138,7 +140,7 @@ export function DashboardOverview({
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">Atalho rápido</p>
                 <h3 className="text-lg font-semibold text-foreground sm:text-xl">
-                  {data.nextAppointment ? data.nextAppointment.client.name : data.organization.name}
+                  {data.nextAppointment ? getAppointmentClientName(data.nextAppointment) : data.organization.name}
                 </h3>
                 <p className="text-xs text-muted-foreground sm:text-sm">
                   {data.nextAppointment
@@ -309,7 +311,7 @@ function TodayTimeline({ items }: { items: AppointmentItem[] }) {
             <p className="text-xs text-muted-foreground">{format(item.endAt, "HH:mm", { locale: ptBR })}</p>
           </div>
           <div className="min-w-0">
-            <p className="truncate font-medium text-foreground">{item.client.name}</p>
+            <p className="truncate font-medium text-foreground">{getAppointmentClientName(item)}</p>
             <p className="truncate text-sm text-muted-foreground">
               {item.service.name} com {item.professional.name}
             </p>
@@ -334,7 +336,7 @@ function UpcomingList({ items }: { items: AppointmentItem[] }) {
         <div key={item.id} className="flex flex-col gap-2 border-b border-border px-4 py-3 last:border-b-0 md:flex-row md:items-center md:justify-between md:gap-3 md:px-5 md:py-4">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <p className="font-medium text-foreground">{item.client.name}</p>
+              <p className="font-medium text-foreground">{getAppointmentClientName(item)}</p>
               <span className="text-xs text-muted-foreground">{formatDateTime(item.startAt)}</span>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
