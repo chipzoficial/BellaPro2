@@ -95,16 +95,45 @@ export function ClientesPage({
       </div>
       <section>
         {filtered.length ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Contato</TableHead>
-                <TableHead>Observações</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <>
+            <div className="space-y-3 md:hidden">
+              {filtered.map((client) => (
+                <div key={client.id} className="rounded-[1.5rem] border border-border bg-white px-4 py-4">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="font-medium text-foreground">{client.name}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{client.phone || client.email || "Sem contato"}</p>
+                    </div>
+                    {client.notes ? (
+                      <div className="rounded-[1.25rem] bg-[#fffaf9] px-3 py-3">
+                        <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">Observações</p>
+                        <p className="mt-2 text-sm text-foreground">{client.notes}</p>
+                      </div>
+                    ) : null}
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" className="flex-1" onClick={() => editClient(client)}>
+                        Editar
+                      </Button>
+                      <Button type="button" variant="ghost" className="flex-1" onClick={() => removeClient(client.id)}>
+                        Remover
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Contato</TableHead>
+                    <TableHead>Observações</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
               {filtered.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell className="font-medium">{client.name}</TableCell>
@@ -122,8 +151,10 @@ export function ClientesPage({
                   </TableCell>
                 </TableRow>
               ))}
-            </TableBody>
-          </Table>
+                </TableBody>
+              </Table>
+            </div>
+          </>
         ) : (
           <EmptyState title="Nenhum cliente encontrado" description="Cadastre clientes para organizar o histórico e acelerar novos agendamentos." />
         )}
