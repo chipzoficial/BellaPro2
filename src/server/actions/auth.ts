@@ -5,7 +5,7 @@ import { addDays } from "date-fns";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
-import { clearSession, createSession, setActiveOrganization } from "@/lib/auth/session";
+import { clearSession, createSession, getCurrentMembership, setActiveOrganization } from "@/lib/auth/session";
 import { consumeAuthToken, createAuthToken, revokeAuthTokens } from "@/lib/auth-tokens";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/email";
 import { onboardingServiceCatalog } from "@/lib/onboarding";
@@ -17,6 +17,7 @@ import {
   registerSchema,
   resetPasswordSchema,
 } from "@/lib/validations/auth";
+import { organizationUserSchema } from "@/lib/validations/entities";
 import type { ActionState } from "@/types";
 
 function fail(message: string, errors?: Record<string, string[] | undefined>): ActionState {
@@ -332,4 +333,139 @@ export async function logoutAction() {
 export async function chooseOrganizationAction(organizationId: string) {
   await setActiveOrganization(organizationId);
   redirect("/app");
+}
+
+export async function upsertOrganizationUserAction(input: unknown): Promise<ActionState> {
+  const membership = await getCurrentMembership([Role.OWNER]);
+  const parsed = organizationUserSchema.safeParse(input);
+  if (!parsed.success) return fail("Dados inválidos.", parsed.error.flatten().fieldErrors);
+
+  const data = parsed.data;
+  const email = data.email.toLowerCase();
+
+  try {
+    if (data.userId && data.membershipId) {
+      const existingMembership = await db.membership.findFirst({
+        where: {
+          id: data.membershipId,
+          userId: data.userId,
+          organizationId: membership.organizationId,
+          role: {
+            in: [Role.MANAGER, Role.PROFESSIONAL, Role.RECEPTIONIST],
+          },
+        },
+        include: {
+          user: true,
+        },
+      });
+
+      if (!existingMembership) {
+        return fail("Usuário não encontrado.");
+      }
+
+      const emailInUse = await db.user.findFirst({
+        where: {
+          email,
+          id: { not: existingMembership.userId },
+        },
+      });
+
+      if (emailInUse) {
+        return fail("Já existe uma conta com esse e-mail.");
+      }
+
+      await db.$transaction(async (tx) => {
+        await tx.user.update({
+          where: { id: existingMembership.userId },
+          data: {
+            name: data.name,
+            email,
+            phone: data.phone || null,
+            isActive: data.isActive,
+            ...(data.password ? { passwordHash: await hashPassword(data.password) } : {}),
+          },
+        });
+
+        await tx.membership.update({
+          where: { id: existingMembership.id },
+          data: {
+            role: data.role,
+          },
+        });
+      });
+
+      return { success: true, message: "Usuário atualizado com sucesso." };
+    }
+
+    const existingUser = await db.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      return fail("Já existe uma conta com esse e-mail. Use outro endereço para este usuário.");
+    }
+
+    const passwordHash = await hashPassword(data.password || "");
+
+    await db.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          name: data.name,
+          email,
+          phone: data.phone || null,
+          passwordHash,
+          isActive: data.isActive,
+        },
+      });
+
+      await tx.membership.create({
+        data: {
+          userId: user.id,
+          organizationId: membership.organizationId,
+          role: data.role,
+        },
+      });
+    });
+
+    return { success: true, message: "Usuário criado com sucesso." };
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : "Erro ao salvar usuário.");
+  }
+}
+
+export async function toggleOrganizationUserStatusAction(membershipId: string): Promise<ActionState> {
+  const membership = await getCurrentMembership([Role.OWNER]);
+
+  try {
+    const targetMembership = await db.membership.findFirst({
+      where: {
+        id: membershipId,
+        organizationId: membership.organizationId,
+        role: {
+          in: [Role.MANAGER, Role.PROFESSIONAL, Role.RECEPTIONIST],
+        },
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    if (!targetMembership) {
+      return fail("Usuário não encontrado.");
+    }
+
+    await db.user.update({
+      where: { id: targetMembership.userId },
+      data: {
+        isActive: !targetMembership.user.isActive,
+      },
+    });
+
+    return {
+      success: true,
+      message: targetMembership.user.isActive ? "Usuário desativado." : "Usuário reativado.",
+    };
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : "Erro ao atualizar usuário.");
+  }
 }

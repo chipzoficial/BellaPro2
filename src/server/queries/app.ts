@@ -1,4 +1,4 @@
-import { AppointmentStatus } from "@prisma/client";
+import { AppointmentStatus, Role } from "@prisma/client";
 import { addDays, endOfDay, endOfMonth, endOfYear, startOfDay, startOfMonth, startOfYear, subDays } from "date-fns";
 import { db } from "@/lib/db";
 
@@ -231,6 +231,27 @@ export async function getClientsManagementData(organizationId: string) {
       },
     },
     orderBy: { updatedAt: "desc" },
+  });
+}
+
+export async function getOrganizationUsers(organizationId: string) {
+  return db.membership.findMany({
+    where: {
+      organizationId,
+      role: {
+        in: [Role.MANAGER, Role.PROFESSIONAL, Role.RECEPTIONIST],
+      },
+    },
+    include: {
+      user: true,
+      organization: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: [{ role: "asc" }, { user: { name: "asc" } }],
   });
 }
 

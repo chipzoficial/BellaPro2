@@ -113,6 +113,25 @@ export const businessHoursSchema = z.object({
   });
 });
 
+export const organizationUserSchema = z.object({
+  membershipId: z.string().optional(),
+  userId: z.string().optional(),
+  name: z.string().min(2, "Informe o nome do usuário."),
+  email: z.string().email("E-mail inválido."),
+  phone: phoneSchema,
+  role: z.enum(["MANAGER", "PROFESSIONAL", "RECEPTIONIST"]),
+  password: z.string().optional().or(z.literal("")),
+  isActive: z.boolean().default(true),
+}).superRefine((data, ctx) => {
+  if (!data.userId && !data.password) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["password"],
+      message: "Informe uma senha para criar o usuário.",
+    });
+  }
+});
+
 export const publicBookingSchema = z.object({
   organizationSlug: slugSchema,
   serviceId: z.string().min(1),

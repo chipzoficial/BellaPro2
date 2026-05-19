@@ -11,15 +11,12 @@ export default async function ConfiguracoesRoute() {
   const publicBaseUrl = await getRequestOrigin();
   const actions = [];
 
-  if (membership.role === Role.ADMIN_GLOBAL) {
+  if (membership.role === Role.OWNER) {
     actions.push(
-      <Button key="admin" asChild variant="outline">
-        <Link href="/admin">Painel admin</Link>
+      <Button key="users" asChild variant="outline">
+        <Link href="/app/usuarios">Gerenciar usuários</Link>
       </Button>
     );
-  }
-
-  if (membership.role === Role.OWNER) {
     actions.push(
       <Button key="billing" asChild variant="outline">
         <Link href="/app/assinatura">Cobrança e assinatura</Link>
