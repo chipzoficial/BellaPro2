@@ -168,7 +168,32 @@ export function AgendamentosPage({
   return (
     <div className="w-full">
       <section className="space-y-4">
-        <div className="flex gap-2 overflow-auto">
+        <div className="space-y-3 md:hidden">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="rounded-full">
+              <SelectValue placeholder="Filtrar status" />
+            </SelectTrigger>
+            <SelectContent>
+              {statusFilters.map((status) => (
+                <SelectItem key={status.value} value={status.value}>
+                  {status.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            className="w-full"
+            onClick={() => {
+              resetForNewAppointment();
+              setOpen(true);
+            }}
+          >
+            Novo agendamento
+          </Button>
+        </div>
+
+        <div className="hidden gap-2 overflow-auto md:flex">
           {statusFilters.map((status) => (
             <Button key={status.value} type="button" variant={statusFilter === status.value ? "default" : "outline"} onClick={() => setStatusFilter(status.value)}>
               {status.label}
@@ -185,6 +210,70 @@ export function AgendamentosPage({
             Novo agendamento
           </Button>
         </div>
+
+        <div className="space-y-3 md:hidden">
+          {filtered.map((item) => (
+            <div key={item.id} className="rounded-[1.5rem] border border-border bg-white px-4 py-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-brand-800">{formatDateTime(item.startAt)}</p>
+                  <p className="mt-2 font-medium text-foreground">{item.client.name}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{item.service.name}</p>
+                </div>
+                <StatusBadge status={item.status} />
+              </div>
+              <div className="mt-4 flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    const appointmentDate = new Date(item.startAt);
+                    const nextDate = format(appointmentDate, "yyyy-MM-dd");
+                    const nextTime = format(appointmentDate, "HH:mm");
+                    setSelectedDate(nextDate);
+                    setSelectedTime(nextTime);
+                    lastAvailabilityKeyRef.current = "";
+                    setClientMode("existing");
+                    form.reset({
+                      id: item.id,
+                      clientMode: "existing",
+                      clientId: item.clientId,
+                      clientName: item.client.name,
+                      clientPhone: item.client.phone ?? "",
+                      professionalId: item.professionalId,
+                      serviceId: item.serviceId,
+                      startAt: new Date(item.startAt).toISOString(),
+                      status: item.status,
+                      notes: item.notes ?? "",
+                    });
+                    setOpen(true);
+                  }}
+                >
+                  Editar
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={() => startTransition(async () => {
+                    const nextStatus = item.status === AppointmentStatus.CONFIRMED ? AppointmentStatus.COMPLETED : AppointmentStatus.CONFIRMED;
+                    const result = await updateAppointmentStatus(item.id, nextStatus);
+                    if (result.success) {
+                      toast.success(result.message);
+                    } else {
+                      toast.error(result.message);
+                    }
+                  })}
+                >
+                  {item.status === AppointmentStatus.CONFIRMED ? "Concluir" : "Confirmar"}
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden md:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -243,6 +332,7 @@ export function AgendamentosPage({
             ))}
           </TableBody>
         </Table>
+        </div>
       </section>
 
       <Dialog open={open} onOpenChange={setOpen}>
