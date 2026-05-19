@@ -14,7 +14,7 @@ export default async function FinanceiroRoute() {
     <div className="space-y-8">
       <PageHeader
         title="Financeiro"
-        description="Resumo financeiro com base nos atendimentos concluídos."
+        description="Acompanhe os resultados do período e os serviços com melhor saída."
         action={
           membership.role === Role.OWNER ? (
             <Button asChild variant="outline">
@@ -23,7 +23,13 @@ export default async function FinanceiroRoute() {
           ) : null
         }
       />
-      <FinanceiroPage revenue={summary.financial.revenue} completedCount={summary.financial.completedCount} appointments={summary.appointments} />
+      <FinanceiroPage
+        revenue={summary.financial.revenue}
+        completedCount={summary.financial.completedCount}
+        canceledCount={summary.financial.canceledCount}
+        noShowCount={summary.financial.noShowCount}
+        topServices={summary.financial.topServices}
+      />
     </div>
   );
 }

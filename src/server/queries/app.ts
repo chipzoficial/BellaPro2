@@ -6,7 +6,7 @@ export async function getOrganizationSummary(organizationId: string) {
   const currentMonthStart = startOfMonth(new Date());
   const currentMonthEnd = endOfMonth(new Date());
 
-  const [services, professionals, clients, appointments] = await Promise.all([
+  const [services, professionals, clients, appointments, monthAppointments] = await Promise.all([
     db.service.findMany({
       where: { organizationId },
       include: {
@@ -47,14 +47,35 @@ export async function getOrganizationSummary(organizationId: string) {
       },
       orderBy: { startAt: "asc" },
     }),
+    db.appointment.findMany({
+      where: {
+        organizationId,
+        startAt: {
+          gte: currentMonthStart,
+          lte: currentMonthEnd,
+        },
+      },
+      include: {
+        client: true,
+        professional: true,
+        service: true,
+      },
+      orderBy: { startAt: "asc" },
+    }),
   ]);
 
-  const completedThisMonth = appointments.filter(
-    (item) =>
-      item.status === AppointmentStatus.COMPLETED &&
-      item.startAt >= currentMonthStart &&
-      item.startAt <= currentMonthEnd
-  );
+  const completedThisMonth = monthAppointments.filter((item) => item.status === AppointmentStatus.COMPLETED);
+  const canceledThisMonth = monthAppointments.filter((item) => item.status === AppointmentStatus.CANCELED);
+  const noShowThisMonth = monthAppointments.filter((item) => item.status === AppointmentStatus.NO_SHOW);
+  const topServices = Object.values(
+    completedThisMonth.reduce<Record<string, { name: string; count: number; revenue: number }>>((acc, item) => {
+      const current = acc[item.service.name] ?? { name: item.service.name, count: 0, revenue: 0 };
+      current.count += 1;
+      current.revenue += item.priceInCents;
+      acc[item.service.name] = current;
+      return acc;
+    }, {})
+  ).sort((a, b) => (b.count === a.count ? b.revenue - a.revenue : b.count - a.count));
 
   return {
     services,
@@ -64,6 +85,9 @@ export async function getOrganizationSummary(organizationId: string) {
     financial: {
       revenue: completedThisMonth.reduce((total, item) => total + item.priceInCents, 0),
       completedCount: completedThisMonth.length,
+      canceledCount: canceledThisMonth.length,
+      noShowCount: noShowThisMonth.length,
+      topServices,
     },
   };
 }
