@@ -71,6 +71,7 @@ export function ProfissionaisPage({
       <div className="flex justify-end">
         <Button
           type="button"
+          className="w-full md:w-auto"
           onClick={() => {
             setSelectedId(null);
             form.reset({ name: "", phone: "", email: "", bio: "", isActive: true, serviceIds: [] });
@@ -83,19 +84,28 @@ export function ProfissionaisPage({
       <section className="space-y-3">
         {professionals.length ? (
           professionals.map((professional) => (
-            <div key={professional.id} className="rounded-2xl border border-border bg-white p-5">
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <h3 className="font-semibold">{professional.name}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{professional.email || professional.phone || "Sem contato informado"}</p>
-                  <p className="mt-2 text-sm text-muted-foreground">{professional.bio || "Sem bio cadastrada."}</p>
-                  <p className="mt-3 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+            <div key={professional.id} className="rounded-[1.5rem] border border-border bg-white p-4 md:p-5">
+              <div className="flex flex-col gap-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold text-foreground">{professional.name}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{professional.email || professional.phone || "Sem contato informado"}</p>
+                  </div>
+                  {!professional.isActive ? (
+                    <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">Inativo</span>
+                  ) : null}
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                     {professional.professionalServices.map((item) => item.service.name).join(" • ") || "Sem serviços vinculados"}
                   </p>
+                  <p className="text-sm text-muted-foreground">{professional.bio || "Sem bio cadastrada."}</p>
                 </div>
-                <div className="flex gap-2">
-                  <Button type="button" variant="outline" onClick={() => edit(professional)}>Editar</Button>
-                  <Button type="button" variant="ghost" onClick={() => startTransition(async () => {
+
+                <div className="flex gap-2 border-t border-border pt-4">
+                  <Button type="button" variant="outline" className="flex-1 md:flex-none" onClick={() => edit(professional)}>Editar</Button>
+                  <Button type="button" variant="ghost" className="flex-1 md:flex-none" onClick={() => startTransition(async () => {
                     const result = await toggleProfessionalStatus(professional.id);
                     if (result.success) {
                       toast.success(result.message);
@@ -118,7 +128,6 @@ export function ProfissionaisPage({
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{selectedId ? "Editar profissional" : "Novo profissional"}</DialogTitle>
-            <DialogDescription>Use um modal dedicado para o cadastro, mantendo a listagem limpa.</DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
