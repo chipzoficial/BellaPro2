@@ -37,6 +37,24 @@ const statusFilters = [
   { value: AppointmentStatus.NO_SHOW, label: "Não compareceu" },
 ] as const;
 
+function getQuickStatusAction(status: AppointmentStatus) {
+  if (status === AppointmentStatus.PENDING) {
+    return {
+      label: "Confirmar",
+      nextStatus: AppointmentStatus.CONFIRMED,
+    };
+  }
+
+  if (status === AppointmentStatus.CONFIRMED) {
+    return {
+      label: "Concluir",
+      nextStatus: AppointmentStatus.COMPLETED,
+    };
+  }
+
+  return null;
+}
+
 export function AgendamentosPage({
   initialOpen = false,
   appointments,
@@ -234,6 +252,11 @@ export function AgendamentosPage({
         <div className="space-y-3 md:hidden">
           {filtered.map((item) => (
             <div key={item.id} className="rounded-[1.5rem] border border-border bg-white px-4 py-4">
+              {(() => {
+                const quickAction = getQuickStatusAction(item.status);
+
+                return (
+                  <>
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-brand-800">{formatDateTime(item.startAt)}</p>
@@ -272,22 +295,26 @@ export function AgendamentosPage({
                 >
                   Editar
                 </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="flex-1"
-                  onClick={() => {
-                    const nextStatus = item.status === AppointmentStatus.CONFIRMED ? AppointmentStatus.COMPLETED : AppointmentStatus.CONFIRMED;
-                    if (nextStatus === AppointmentStatus.COMPLETED) {
-                      setPendingCompletion({ id: item.id });
-                      return;
-                    }
-                    startTransition(() => handleStatusChange(item.id, nextStatus));
-                  }}
-                >
-                  {item.status === AppointmentStatus.CONFIRMED ? "Concluir" : "Confirmar"}
-                </Button>
+                {quickAction ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="flex-1"
+                    onClick={() => {
+                      if (quickAction.nextStatus === AppointmentStatus.COMPLETED) {
+                        setPendingCompletion({ id: item.id });
+                        return;
+                      }
+                      startTransition(() => handleStatusChange(item.id, quickAction.nextStatus));
+                    }}
+                  >
+                    {quickAction.label}
+                  </Button>
+                ) : null}
               </div>
+                  </>
+                );
+              })()}
             </div>
           ))}
         </div>
@@ -306,6 +333,11 @@ export function AgendamentosPage({
           <TableBody>
             {filtered.map((item) => (
               <TableRow key={item.id}>
+                {(() => {
+                  const quickAction = getQuickStatusAction(item.status);
+
+                  return (
+                    <>
                 <TableCell>{formatDateTime(item.startAt)}</TableCell>
                 <TableCell>{item.client.name}</TableCell>
                 <TableCell>{item.service.name}</TableCell>
@@ -334,18 +366,22 @@ export function AgendamentosPage({
                       });
                       setOpen(true);
                     }}>Editar</Button>
-                    <Button type="button" variant="ghost" onClick={() => {
-                      const nextStatus = item.status === AppointmentStatus.CONFIRMED ? AppointmentStatus.COMPLETED : AppointmentStatus.CONFIRMED;
-                      if (nextStatus === AppointmentStatus.COMPLETED) {
-                        setPendingCompletion({ id: item.id });
-                        return;
-                      }
-                      startTransition(() => handleStatusChange(item.id, nextStatus));
-                    }}>
-                      {item.status === AppointmentStatus.CONFIRMED ? "Concluir" : "Confirmar"}
-                    </Button>
+                    {quickAction ? (
+                      <Button type="button" variant="ghost" onClick={() => {
+                        if (quickAction.nextStatus === AppointmentStatus.COMPLETED) {
+                          setPendingCompletion({ id: item.id });
+                          return;
+                        }
+                        startTransition(() => handleStatusChange(item.id, quickAction.nextStatus));
+                      }}>
+                        {quickAction.label}
+                      </Button>
+                    ) : null}
                   </div>
                 </TableCell>
+                    </>
+                  );
+                })()}
               </TableRow>
             ))}
           </TableBody>
