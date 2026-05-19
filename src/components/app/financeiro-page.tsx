@@ -1,4 +1,5 @@
-import { formatMoney } from "@/lib/utils";
+import { formatDateTime, formatMoney } from "@/lib/utils";
+import type { FinancialPeriod } from "@/server/queries/app";
 
 type TopService = {
   name: string;
@@ -25,12 +26,16 @@ function FinanceMetric({
 }
 
 export function FinanceiroPage({
+  period,
+  range,
   revenue,
   completedCount,
   canceledCount,
   noShowCount,
   topServices,
 }: {
+  period: FinancialPeriod;
+  range: { start: Date; end: Date };
   revenue: number;
   completedCount: number;
   canceledCount: number;
@@ -43,6 +48,18 @@ export function FinanceiroPage({
     ? Math.round((completedCount / totalResolvedAppointments) * 100)
     : 0;
   const leadingServiceCount = topServices[0]?.count ?? 1;
+  const periodTextMap: Record<FinancialPeriod, string> = {
+    month: "neste mês",
+    last_30_days: "nos últimos 30 dias",
+    last_90_days: "nos últimos 90 dias",
+    year: "neste ano",
+  };
+  const periodLabelMap: Record<FinancialPeriod, string> = {
+    month: "Este mês",
+    last_30_days: "Últimos 30 dias",
+    last_90_days: "Últimos 90 dias",
+    year: "Este ano",
+  };
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -54,8 +71,15 @@ export function FinanceiroPage({
               {formatMoney(revenue)}
             </h2>
             <p className="text-sm text-muted-foreground">
-              Resultado estimado com base nos atendimentos concluídos neste mês.
+              Resultado estimado com base nos atendimentos concluídos {periodTextMap[period]}.
             </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span className="rounded-full bg-[#fffaf9] px-3 py-1 font-medium text-foreground">{periodLabelMap[period]}</span>
+            <span>
+              {formatDateTime(range.start, "dd/MM/yyyy")} até {formatDateTime(range.end, "dd/MM/yyyy")}
+            </span>
           </div>
 
           <div className="grid gap-4 border-t border-border pt-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -82,7 +106,7 @@ export function FinanceiroPage({
         <div className="rounded-[28px] border border-border bg-white px-5 py-5 sm:px-6 sm:py-6">
           <div className="space-y-1">
             <h3 className="text-xl font-semibold text-foreground">Serviços com melhor resultado</h3>
-            <p className="text-sm text-muted-foreground">Volume e faturamento do mês em uma leitura rápida.</p>
+            <p className="text-sm text-muted-foreground">Volume e faturamento do período em uma leitura rápida.</p>
           </div>
 
           <div className="mt-6 space-y-4">
@@ -125,7 +149,7 @@ export function FinanceiroPage({
         <div className="rounded-[28px] border border-border bg-white px-5 py-5 sm:px-6 sm:py-6">
           <div className="space-y-1">
             <h3 className="text-xl font-semibold text-foreground">Leitura operacional</h3>
-            <p className="text-sm text-muted-foreground">Como os atendimentos encerrados se distribuíram no mês.</p>
+            <p className="text-sm text-muted-foreground">Como os atendimentos encerrados se distribuíram no período.</p>
           </div>
 
           <div className="mt-6 space-y-3">
