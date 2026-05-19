@@ -208,7 +208,12 @@ export async function deleteClient(id: string): Promise<ActionState> {
     revalidatePath("/app/clientes");
     return ok("Cliente removido com sucesso.");
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+    if (
+      (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") ||
+      (error instanceof Error &&
+        (error.message.includes("Appointment_clientId_fkey") ||
+          error.message.includes("violates RESTRICT setting of foreign key constraint")))
+    ) {
       return fail("Esse cliente já possui agendamentos vinculados e não pode ser removido.");
     }
     return fail(error instanceof Error ? error.message : "Erro ao remover cliente.");
