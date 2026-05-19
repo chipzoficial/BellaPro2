@@ -76,6 +76,43 @@ export const blockedTimeSchema = z.object({
   }
 });
 
+export const businessHoursSchema = z.object({
+  professionalId: z.string().min(1),
+  days: z.array(
+    z.object({
+      weekDay: z.enum(["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"]),
+      isActive: z.boolean(),
+      startTime: z.string(),
+      endTime: z.string(),
+    })
+  ),
+}).superRefine((data, ctx) => {
+  data.days.forEach((day, index) => {
+    if (!day.isActive) return;
+    if (!day.startTime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["days", index, "startTime"],
+        message: "Informe o horário inicial.",
+      });
+    }
+    if (!day.endTime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["days", index, "endTime"],
+        message: "Informe o horário final.",
+      });
+    }
+    if (day.startTime && day.endTime && day.endTime <= day.startTime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["days", index, "endTime"],
+        message: "O horário final deve ser maior que o inicial.",
+      });
+    }
+  });
+});
+
 export const publicBookingSchema = z.object({
   organizationSlug: slugSchema,
   serviceId: z.string().min(1),

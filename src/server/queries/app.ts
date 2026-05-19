@@ -28,6 +28,10 @@ export async function getOrganizationSummary(organizationId: string) {
             service: true,
           },
         },
+        businessHours: {
+          where: { isActive: true },
+          orderBy: { weekDay: "asc" },
+        },
       },
       orderBy: { name: "asc" },
     }),

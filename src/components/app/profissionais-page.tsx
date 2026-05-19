@@ -2,9 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { WeekDay } from "@prisma/client";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { professionalSchema } from "@/lib/validations/entities";
-import { toggleProfessionalStatus, upsertProfessional } from "@/server/actions/domain";
+import { toggleProfessionalStatus, updateProfessionalBusinessHours, upsertProfessional } from "@/server/actions/domain";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -12,6 +14,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { toast } from "@/components/ui/use-toast";
+
+const weekDayLabels: Array<{ value: WeekDay; label: string }> = [
+  { value: WeekDay.MONDAY, label: "Segunda" },
+  { value: WeekDay.TUESDAY, label: "Terça" },
+  { value: WeekDay.WEDNESDAY, label: "Quarta" },
+  { value: WeekDay.THURSDAY, label: "Quinta" },
+  { value: WeekDay.FRIDAY, label: "Sexta" },
+  { value: WeekDay.SATURDAY, label: "Sábado" },
+  { value: WeekDay.SUNDAY, label: "Domingo" },
+];
+
+function createDefaultSchedule() {
+  return weekDayLabels.map((day) => ({
+    weekDay: day.value,
+    isActive: day.value !== WeekDay.SUNDAY,
+    startTime: "09:00",
+    endTime: "18:00",
+  }));
+}
 
 export function ProfissionaisPage({
   professionals,
@@ -25,12 +46,22 @@ export function ProfissionaisPage({
     bio: string | null;
     isActive: boolean;
     professionalServices: Array<{ service: { id: string; name: string } }>;
+    businessHours: Array<{
+      weekDay: WeekDay;
+      startTime: string;
+      endTime: string;
+    }>;
   }>;
   services: Array<{ id: string; name: string }>;
 }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isSchedulePending, startScheduleTransition] = useTransition();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [scheduleProfessional, setScheduleProfessional] = useState<(typeof professionals)[number] | null>(null);
   const [open, setOpen] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [scheduleDays, setScheduleDays] = useState(createDefaultSchedule());
   const form = useForm<any>({
     resolver: zodResolver(professionalSchema),
     defaultValues: { name: "", phone: "", email: "", bio: "", isActive: true, serviceIds: [] },
@@ -64,6 +95,22 @@ export function ProfissionaisPage({
       serviceIds: item.professionalServices.map((entry) => entry.service.id),
     });
     setOpen(true);
+  }
+
+  function openSchedule(item: (typeof professionals)[number]) {
+    const nextSchedule = weekDayLabels.map((day) => {
+      const existing = item.businessHours.find((hour) => hour.weekDay === day.value);
+      return {
+        weekDay: day.value,
+        isActive: Boolean(existing),
+        startTime: existing?.startTime ?? "09:00",
+        endTime: existing?.endTime ?? "18:00",
+      };
+    });
+
+    setScheduleProfessional(item);
+    setScheduleDays(nextSchedule);
+    setScheduleOpen(true);
   }
 
   return (
@@ -105,6 +152,9 @@ export function ProfissionaisPage({
 
                 <div className="flex gap-2 border-t border-border pt-4">
                   <Button type="button" variant="outline" className="flex-1 md:flex-none" onClick={() => edit(professional)}>Editar</Button>
+                  <Button type="button" variant="ghost" className="flex-1 md:flex-none" onClick={() => openSchedule(professional)}>
+                    Horários
+                  </Button>
                   <Button type="button" variant="ghost" className="flex-1 md:flex-none" onClick={() => startTransition(async () => {
                     const result = await toggleProfessionalStatus(professional.id);
                     if (result.success) {
@@ -171,6 +221,107 @@ export function ProfissionaisPage({
               </div>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={scheduleOpen} onOpenChange={setScheduleOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Horários de atendimento</DialogTitle>
+            <DialogDescription>
+              Defina a rotina semanal de {scheduleProfessional?.name ?? "atendimento"}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            {scheduleDays.map((day, index) => (
+              <div
+                key={day.weekDay}
+                className="grid gap-3 rounded-2xl border border-border px-4 py-3 sm:grid-cols-[120px_110px_1fr_1fr]"
+              >
+                <label className="flex items-center gap-3 text-sm font-medium text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={day.isActive}
+                    onChange={(event) =>
+                      setScheduleDays((current) =>
+                        current.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, isActive: event.target.checked } : item
+                        )
+                      )
+                    }
+                  />
+                  <span>{weekDayLabels.find((item) => item.value === day.weekDay)?.label}</span>
+                </label>
+
+                <div className="rounded-full bg-muted px-3 py-2 text-center text-sm text-muted-foreground">
+                  {day.isActive ? "Ativo" : "Fechado"}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Início</label>
+                  <Input
+                    type="time"
+                    value={day.startTime}
+                    disabled={!day.isActive}
+                    onChange={(event) =>
+                      setScheduleDays((current) =>
+                        current.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, startTime: event.target.value } : item
+                        )
+                      )
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Fim</label>
+                  <Input
+                    type="time"
+                    value={day.endTime}
+                    disabled={!day.isActive}
+                    onChange={(event) =>
+                      setScheduleDays((current) =>
+                        current.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, endTime: event.target.value } : item
+                        )
+                      )
+                    }
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              disabled={isSchedulePending || !scheduleProfessional}
+              onClick={() => {
+                if (!scheduleProfessional) return;
+
+                startScheduleTransition(async () => {
+                  const result = await updateProfessionalBusinessHours({
+                    professionalId: scheduleProfessional.id,
+                    days: scheduleDays,
+                  });
+
+                  if (result.success) {
+                    toast.success(result.message);
+                    setScheduleOpen(false);
+                    router.refresh();
+                  } else {
+                    toast.error(result.message);
+                  }
+                });
+              }}
+            >
+              Salvar horários
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setScheduleOpen(false)}>
+              Cancelar
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

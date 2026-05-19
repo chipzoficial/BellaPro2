@@ -15,6 +15,7 @@ import { getCurrentMembership } from "@/lib/auth/session";
 import {
   appointmentSchema,
   blockedTimeSchema,
+  businessHoursSchema,
   clientSchema,
   organizationSchema,
   professionalSchema,
@@ -736,5 +737,55 @@ export async function deleteBlockedTime(id: string): Promise<ActionState> {
     return ok("Bloqueio removido.");
   } catch (error) {
     return fail(error instanceof Error ? error.message : "Erro ao remover bloqueio.");
+  }
+}
+
+export async function updateProfessionalBusinessHours(input: unknown): Promise<ActionState> {
+  try {
+    const membership = await requireScope("professionals");
+    const parsed = businessHoursSchema.safeParse(input);
+    if (!parsed.success) return fail("Dados inválidos.", parsed.error.flatten().fieldErrors);
+
+    const professional = await db.professional.findFirst({
+      where: {
+        id: parsed.data.professionalId,
+        organizationId: membership.organizationId,
+      },
+    });
+
+    if (!professional) {
+      return fail("Profissional não encontrado.");
+    }
+
+    await db.$transaction(async (tx) => {
+      await tx.businessHour.deleteMany({
+        where: {
+          organizationId: membership.organizationId,
+          professionalId: professional.id,
+        },
+      });
+
+      const activeDays = parsed.data.days.filter((day) => day.isActive);
+
+      if (activeDays.length) {
+        await tx.businessHour.createMany({
+          data: activeDays.map((day) => ({
+            organizationId: membership.organizationId,
+            professionalId: professional.id,
+            weekDay: day.weekDay,
+            startTime: day.startTime,
+            endTime: day.endTime,
+            isActive: true,
+          })),
+        });
+      }
+    });
+
+    revalidatePath("/app/profissionais");
+    revalidatePath("/app/agenda");
+    revalidatePath("/app");
+    return ok("Horários atualizados.");
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : "Erro ao atualizar horários.");
   }
 }
