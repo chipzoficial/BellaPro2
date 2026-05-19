@@ -7,14 +7,20 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 export function Topbar({
   salonName,
   userName,
+  subscriptionNotice,
 }: {
   salonName: string;
   userName: string;
+  subscriptionNotice: {
+    currentPeriodEnd: Date;
+    daysRemaining: number;
+    isExpiringSoon: boolean;
+  } | null;
 }) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-border bg-white/70 px-4 py-4 backdrop-blur md:px-6">
       <div className="flex items-center gap-3">
-        <MobileNav />
+        <MobileNav subscriptionNotice={subscriptionNotice} />
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Salão atual</p>
           <p className="text-sm font-semibold text-foreground">{salonName}</p>
