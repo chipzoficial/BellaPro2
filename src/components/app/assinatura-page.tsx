@@ -128,13 +128,13 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
   return (
     <div className="space-y-8">
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_360px]">
-        <div className="rounded-[28px] border border-border bg-white p-6 shadow-soft">
+        <div className="rounded-[28px] border border-border bg-white p-5 shadow-soft sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <Badge variant={overview.currentSubscription ? statusVariantMap[overview.currentSubscription.status] : "outline"}>
                 {overview.currentSubscription ? statusLabelMap[overview.currentSubscription.status] : "Sem plano ativo"}
               </Badge>
-              <h2 className="mt-4 font-heading text-3xl text-foreground">{heroTitle}</h2>
+              <h2 className="mt-3 font-heading text-[2rem] leading-tight text-foreground sm:mt-4 sm:text-3xl">{heroTitle}</h2>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                 {overview.currentSubscription
                   ? isTrialing
@@ -154,7 +154,7 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
             ) : null}
           </div>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3 sm:gap-4">
             <SummaryTile
               icon={CreditCard}
               label="Status"
@@ -182,15 +182,10 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
           </div>
         </div>
 
-        <aside className="rounded-[28px] border border-border bg-white p-6 shadow-soft">
+        <aside className="order-3 rounded-[28px] border border-border bg-white p-5 shadow-soft sm:p-6 xl:order-none">
           <h3 className="text-lg font-semibold text-foreground">Ações de cobrança</h3>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {isTrialing
-              ? "Você pode escolher um plano a qualquer momento."
-              : "Gerencie assinatura, cartão e faturas por aqui."}
-          </p>
 
-          <div className="mt-6 space-y-3">
+          <div className="mt-4 space-y-3">
             {!isTrialing ? (
               <Button type="button" className="w-full justify-between" onClick={() => currentPlanId && startCheckout(currentPlanId)} disabled={!currentPlanId || Boolean(overview.currentSubscription?.status === SubscriptionStatus.ACTIVE)}>
                 <span>Assinar plano atual</span>
@@ -218,7 +213,7 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
             const isLoading = loadingPlanId === plan.id;
 
             return (
-              <div key={plan.id} className={`rounded-[26px] border p-6 shadow-soft ${isCurrent ? "border-brand-300 bg-brand-50/40" : "border-border bg-white"}`}>
+              <div key={plan.id} className={`rounded-[26px] border p-5 shadow-soft sm:p-6 ${isCurrent ? "border-brand-300 bg-brand-50/40" : "border-border bg-white"}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-lg font-semibold text-foreground">{plan.name}</p>
@@ -227,12 +222,12 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
                   {isCurrent ? <Badge variant="success">Plano atual</Badge> : null}
                 </div>
 
-                <div className="mt-6">
+                <div className="mt-5">
                   <p className="text-3xl font-semibold text-foreground">{formatMoney(plan.priceInCents)}</p>
                   <p className="mt-1 text-sm text-muted-foreground">por mês</p>
                 </div>
 
-                <div className="mt-6 space-y-3 text-sm text-muted-foreground">
+                <div className="mt-5 space-y-2.5 text-sm text-muted-foreground">
                   <FeatureRow label={plan.maxProfessionals ? `Até ${plan.maxProfessionals} profissionais` : "Profissionais ilimitados"} />
                   <FeatureRow
                     label={
@@ -242,12 +237,12 @@ export function AssinaturaPage({ overview }: { overview: Overview }) {
                     }
                   />
                   <FeatureRow
-                    label={plan.stripePriceId ? "Cobrança online pronta" : "Configuração de cobrança pendente"}
+                    label={plan.stripePriceId ? "Acesso a todos os módulos" : "Configuração de cobrança pendente"}
                     danger={!plan.stripePriceId}
                   />
                 </div>
 
-                <div className="mt-6">
+                <div className="mt-5">
                   <Button
                     type="button"
                     className="w-full"
@@ -280,12 +275,12 @@ function SummaryTile({
   helper: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-[#fffaf9] px-4 py-4">
+    <div className="rounded-2xl border border-border bg-[#fffaf9] px-4 py-3.5 sm:py-4">
       <div className="flex items-center gap-2 text-muted-foreground">
         <Icon className="h-4 w-4 text-brand-700" />
         <span className="text-xs font-medium uppercase tracking-[0.16em]">{label}</span>
       </div>
-      <p className="mt-3 text-lg font-semibold text-foreground">{value}</p>
+      <p className="mt-2.5 text-lg font-semibold text-foreground">{value}</p>
       <p className="mt-1 text-xs text-muted-foreground">{helper}</p>
     </div>
   );
