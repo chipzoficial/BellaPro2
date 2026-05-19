@@ -7,6 +7,16 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { professionalSchema } from "@/lib/validations/entities";
 import { toggleProfessionalStatus, updateProfessionalBusinessHours, upsertProfessional } from "@/server/actions/domain";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -59,6 +69,7 @@ export function ProfissionaisPage({
   const [isSchedulePending, startScheduleTransition] = useTransition();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [scheduleProfessional, setScheduleProfessional] = useState<(typeof professionals)[number] | null>(null);
+  const [pendingStatusChange, setPendingStatusChange] = useState<(typeof professionals)[number] | null>(null);
   const [open, setOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleDays, setScheduleDays] = useState(createDefaultSchedule());
@@ -155,14 +166,23 @@ export function ProfissionaisPage({
                   <Button type="button" variant="ghost" className="flex-1 md:flex-none" onClick={() => openSchedule(professional)}>
                     Horários
                   </Button>
-                  <Button type="button" variant="ghost" className="flex-1 md:flex-none" onClick={() => startTransition(async () => {
-                    const result = await toggleProfessionalStatus(professional.id);
-                    if (result.success) {
-                      toast.success(result.message);
-                    } else {
-                      toast.error(result.message);
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="flex-1 md:flex-none"
+                    onClick={() =>
+                      professional.isActive
+                        ? setPendingStatusChange(professional)
+                        : startTransition(async () => {
+                            const result = await toggleProfessionalStatus(professional.id);
+                            if (result.success) {
+                              toast.success(result.message);
+                            } else {
+                              toast.error(result.message);
+                            }
+                          })
                     }
-                  })}>
+                  >
                     {professional.isActive ? "Desativar" : "Ativar"}
                   </Button>
                 </div>
@@ -324,6 +344,38 @@ export function ProfissionaisPage({
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={Boolean(pendingStatusChange)} onOpenChange={(open) => !open && setPendingStatusChange(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desativar profissional</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingStatusChange
+                ? `Deseja desativar ${pendingStatusChange.name}? Isso pode impactar a agenda e a disponibilidade dela.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingStatusChange) return;
+                startTransition(async () => {
+                  const result = await toggleProfessionalStatus(pendingStatusChange.id);
+                  if (result.success) {
+                    toast.success(result.message);
+                  } else {
+                    toast.error(result.message);
+                  }
+                });
+                setPendingStatusChange(null);
+              }}
+            >
+              Desativar profissional
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

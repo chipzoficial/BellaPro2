@@ -7,6 +7,16 @@ import { updateAppointmentStatus } from "@/server/actions/domain";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/components/ui/use-toast";
@@ -33,6 +43,10 @@ const closedStatuses = [
   AppointmentStatus.NO_SHOW,
 ] as const;
 
+function getStatusLabel(status: AppointmentStatus) {
+  return statusOptions.find((item) => item.value === status)?.label ?? status;
+}
+
 export function HistoricoPage({
   appointments,
 }: {
@@ -41,6 +55,7 @@ export function HistoricoPage({
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [draftStatuses, setDraftStatuses] = useState<Record<string, AppointmentStatus>>({});
   const [historyAppointments, setHistoryAppointments] = useState(appointments);
+  const [pendingStatusSave, setPendingStatusSave] = useState<{ id: string; nextStatus: AppointmentStatus; clientName: string } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const filtered = useMemo(
@@ -139,7 +154,13 @@ export function HistoricoPage({
                       type="button"
                       className="w-full"
                       disabled={isPending || selectedStatus === item.status}
-                      onClick={() => startTransition(() => handleSaveStatus(item.id, selectedStatus))}
+                      onClick={() =>
+                        setPendingStatusSave({
+                          id: item.id,
+                          nextStatus: selectedStatus,
+                          clientName: getAppointmentClientName(item),
+                        })
+                      }
                     >
                       Salvar status
                     </Button>
@@ -198,7 +219,13 @@ export function HistoricoPage({
                           type="button"
                           variant="outline"
                           disabled={isPending || selectedStatus === item.status}
-                          onClick={() => startTransition(() => handleSaveStatus(item.id, selectedStatus))}
+                          onClick={() =>
+                            setPendingStatusSave({
+                              id: item.id,
+                              nextStatus: selectedStatus,
+                              clientName: getAppointmentClientName(item),
+                            })
+                          }
                         >
                           Salvar status
                         </Button>
@@ -211,6 +238,31 @@ export function HistoricoPage({
           </div>
         </>
       )}
+
+      <AlertDialog open={Boolean(pendingStatusSave)} onOpenChange={(open) => !open && setPendingStatusSave(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Alterar status do atendimento</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingStatusSave
+                ? `Deseja alterar o atendimento de ${pendingStatusSave.clientName} para ${getStatusLabel(pendingStatusSave.nextStatus).toLowerCase()}?`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingStatusSave) return;
+                startTransition(() => handleSaveStatus(pendingStatusSave.id, pendingStatusSave.nextStatus));
+                setPendingStatusSave(null);
+              }}
+            >
+              Salvar status
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }

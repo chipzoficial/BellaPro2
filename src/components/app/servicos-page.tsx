@@ -5,6 +5,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { serviceSchema } from "@/lib/validations/entities";
 import { toggleServiceStatus, upsertService } from "@/server/actions/domain";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -46,6 +56,7 @@ export function ServicosPage({
   professionals: Array<{ id: string; name: string }>;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [pendingStatusChange, setPendingStatusChange] = useState<(typeof services)[number] | null>(null);
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const form = useForm<any>({
@@ -131,14 +142,23 @@ export function ServicosPage({
                   }} className="flex-1 md:flex-none">
                     Editar
                   </Button>
-                  <Button type="button" variant="ghost" className="flex-1 md:flex-none" onClick={() => startTransition(async () => {
-                    const result = await toggleServiceStatus(service.id);
-                    if (result.success) {
-                      toast.success(result.message);
-                    } else {
-                      toast.error(result.message);
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="flex-1 md:flex-none"
+                    onClick={() =>
+                      service.isActive
+                        ? setPendingStatusChange(service)
+                        : startTransition(async () => {
+                            const result = await toggleServiceStatus(service.id);
+                            if (result.success) {
+                              toast.success(result.message);
+                            } else {
+                              toast.error(result.message);
+                            }
+                          })
                     }
-                  })}>
+                  >
                     {service.isActive ? "Desativar" : "Ativar"}
                   </Button>
                 </div>
@@ -219,6 +239,38 @@ export function ServicosPage({
           </Form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={Boolean(pendingStatusChange)} onOpenChange={(open) => !open && setPendingStatusChange(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desativar serviço</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingStatusChange
+                ? `Deseja desativar ${pendingStatusChange.name}? Ele deixará de aparecer para novos agendamentos.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingStatusChange) return;
+                startTransition(async () => {
+                  const result = await toggleServiceStatus(pendingStatusChange.id);
+                  if (result.success) {
+                    toast.success(result.message);
+                  } else {
+                    toast.error(result.message);
+                  }
+                });
+                setPendingStatusChange(null);
+              }}
+            >
+              Desativar serviço
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

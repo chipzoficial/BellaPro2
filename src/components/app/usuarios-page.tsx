@@ -7,6 +7,16 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { organizationUserSchema } from "@/lib/validations/entities";
 import { toggleOrganizationUserStatusAction, upsertOrganizationUserAction } from "@/server/actions/auth";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -56,6 +66,7 @@ export function UsuariosPage({
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [selectedMembershipId, setSelectedMembershipId] = useState<string | null>(null);
+  const [pendingStatusChange, setPendingStatusChange] = useState<(typeof users)[number] | null>(null);
   const form = useForm<any>({
     resolver: zodResolver(organizationUserSchema),
     defaultValues: {
@@ -137,15 +148,17 @@ export function UsuariosPage({
                     variant="ghost"
                     className="flex-1"
                     onClick={() =>
-                      startTransition(async () => {
-                        const result = await toggleOrganizationUserStatusAction(item.id);
-                        if (!result.success) {
-                          toast.error(result.message);
-                          return;
-                        }
-                        toast.success(result.message);
-                        router.refresh();
-                      })
+                      item.user.isActive
+                        ? setPendingStatusChange(item)
+                        : startTransition(async () => {
+                            const result = await toggleOrganizationUserStatusAction(item.id);
+                            if (!result.success) {
+                              toast.error(result.message);
+                              return;
+                            }
+                            toast.success(result.message);
+                            router.refresh();
+                          })
                     }
                   >
                     {item.user.isActive ? "Desativar" : "Ativar"}
@@ -191,15 +204,17 @@ export function UsuariosPage({
                           type="button"
                           variant="ghost"
                           onClick={() =>
-                            startTransition(async () => {
-                              const result = await toggleOrganizationUserStatusAction(item.id);
-                              if (!result.success) {
-                                toast.error(result.message);
-                                return;
-                              }
-                              toast.success(result.message);
-                              router.refresh();
-                            })
+                            item.user.isActive
+                              ? setPendingStatusChange(item)
+                              : startTransition(async () => {
+                                  const result = await toggleOrganizationUserStatusAction(item.id);
+                                  if (!result.success) {
+                                    toast.error(result.message);
+                                    return;
+                                  }
+                                  toast.success(result.message);
+                                  router.refresh();
+                                })
                           }
                         >
                           {item.user.isActive ? "Desativar" : "Ativar"}
@@ -359,6 +374,39 @@ export function UsuariosPage({
           </Form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={Boolean(pendingStatusChange)} onOpenChange={(open) => !open && setPendingStatusChange(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desativar usuário</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingStatusChange
+                ? `Deseja desativar ${pendingStatusChange.user.name}? Essa pessoa perderá o acesso ao salão.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingStatusChange) return;
+                startTransition(async () => {
+                  const result = await toggleOrganizationUserStatusAction(pendingStatusChange.id);
+                  if (!result.success) {
+                    toast.error(result.message);
+                    return;
+                  }
+                  toast.success(result.message);
+                  router.refresh();
+                });
+                setPendingStatusChange(null);
+              }}
+            >
+              Desativar usuário
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -150,6 +150,8 @@ export function AgendaWorkspace({
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>("all");
   const [selectedAppointment, setSelectedAppointment] = useState<AgendaAppointment | null>(null);
   const [pendingCompletion, setPendingCompletion] = useState<{ id: string } | null>(null);
+  const [pendingStatusAction, setPendingStatusAction] = useState<{ id: string; status: AppointmentStatus; clientName: string } | null>(null);
+  const [pendingBlockedRemoval, setPendingBlockedRemoval] = useState<AgendaBlockedTime | null>(null);
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [blockForm, setBlockForm] = useState({
     professionalId: "all",
@@ -466,19 +468,7 @@ export function AgendaWorkspace({
                       variant="ghost"
                       size="icon"
                       className="h-9 w-9 shrink-0 rounded-full"
-                      onClick={() => {
-                        startBlockingTransition(async () => {
-                          const result = await deleteBlockedTime(blockedTime.id);
-                          if (!result.success) {
-                            toast.error(result.message);
-                            return;
-                          }
-
-                          setAgendaBlockedTimes((current) => current.filter((item) => item.id !== blockedTime.id));
-                          router.refresh();
-                          toast.success(result.message);
-                        });
-                      }}
+                      onClick={() => setPendingBlockedRemoval(blockedTime)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -807,7 +797,11 @@ export function AgendaWorkspace({
                               return;
                             }
 
-                            startTransition(() => applyStatusChange(selectedAppointment.id, action.status));
+                            setPendingStatusAction({
+                              id: selectedAppointment.id,
+                              status: action.status,
+                              clientName: getAppointmentClientName(selectedAppointment),
+                            });
                           }}
                         >
                           {action.label}
@@ -844,6 +838,73 @@ export function AgendaWorkspace({
               }}
             >
               Concluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={Boolean(pendingStatusAction)} onOpenChange={(open) => !open && setPendingStatusAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingStatusAction?.status === AppointmentStatus.CANCELED ? "Cancelar atendimento" : "Marcar ausência"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingStatusAction
+                ? pendingStatusAction.status === AppointmentStatus.CANCELED
+                  ? `Deseja cancelar o atendimento de ${pendingStatusAction.clientName}?`
+                  : `Deseja marcar ausência para o atendimento de ${pendingStatusAction.clientName}?`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingStatusAction) return;
+                startTransition(() => applyStatusChange(pendingStatusAction.id, pendingStatusAction.status));
+                setPendingStatusAction(null);
+              }}
+            >
+              {pendingStatusAction?.status === AppointmentStatus.CANCELED ? "Cancelar atendimento" : "Marcar ausência"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={Boolean(pendingBlockedRemoval)} onOpenChange={(open) => !open && setPendingBlockedRemoval(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover bloqueio</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingBlockedRemoval
+                ? `Deseja remover o bloqueio de ${format(pendingBlockedRemoval.startAt, "HH:mm")} até ${format(
+                    pendingBlockedRemoval.endAt,
+                    "HH:mm"
+                  )}${pendingBlockedRemoval.professional ? ` para ${pendingBlockedRemoval.professional.name}` : " para toda a equipe"}?`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingBlockedRemoval) return;
+                startBlockingTransition(async () => {
+                  const result = await deleteBlockedTime(pendingBlockedRemoval.id);
+                  if (!result.success) {
+                    toast.error(result.message);
+                    return;
+                  }
+
+                  setAgendaBlockedTimes((current) => current.filter((item) => item.id !== pendingBlockedRemoval.id));
+                  router.refresh();
+                  toast.success(result.message);
+                });
+                setPendingBlockedRemoval(null);
+              }}
+            >
+              Remover bloqueio
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
