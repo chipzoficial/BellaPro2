@@ -32,9 +32,6 @@ const statusFilters = [
   { value: "all", label: "Todos" },
   { value: AppointmentStatus.PENDING, label: "Pendente" },
   { value: AppointmentStatus.CONFIRMED, label: "Confirmado" },
-  { value: AppointmentStatus.COMPLETED, label: "Concluído" },
-  { value: AppointmentStatus.CANCELED, label: "Cancelado" },
-  { value: AppointmentStatus.NO_SHOW, label: "Não compareceu" },
 ] as const;
 
 function getQuickStatusAction(status: AppointmentStatus) {
@@ -179,7 +176,10 @@ export function AgendamentosPage({
   }, [form, open, selectedDate, selectedTime, watchedAppointmentId, watchedProfessionalId, watchedServiceId]);
 
   const filtered = useMemo(
-    () => appointments.filter((item) => (statusFilter === "all" ? true : item.status === statusFilter)),
+    () =>
+      appointments
+        .filter((item) => [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED].includes(item.status))
+        .filter((item) => (statusFilter === "all" ? true : item.status === statusFilter)),
     [appointments, statusFilter]
   );
   const matchingClients = useMemo(() => {

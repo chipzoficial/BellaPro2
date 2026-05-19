@@ -68,6 +68,55 @@ export async function getOrganizationSummary(organizationId: string) {
   };
 }
 
+export async function getAppointmentManagementData(organizationId: string) {
+  const [services, professionals, clients, appointments] = await Promise.all([
+    db.service.findMany({
+      where: { organizationId },
+      include: {
+        professionalServices: {
+          include: {
+            professional: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.professional.findMany({
+      where: { organizationId },
+      include: {
+        professionalServices: {
+          include: {
+            service: true,
+          },
+        },
+      },
+      orderBy: { name: "asc" },
+    }),
+    db.client.findMany({
+      where: { organizationId },
+      orderBy: { updatedAt: "desc" },
+    }),
+    db.appointment.findMany({
+      where: {
+        organizationId,
+      },
+      include: {
+        client: true,
+        professional: true,
+        service: true,
+      },
+      orderBy: { startAt: "desc" },
+    }),
+  ]);
+
+  return {
+    services,
+    professionals,
+    clients,
+    appointments,
+  };
+}
+
 export async function getAgendaDay(organizationId: string, date: Date, professionalId?: string) {
   return db.appointment.findMany({
     where: {
