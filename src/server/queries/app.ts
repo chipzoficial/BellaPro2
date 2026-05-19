@@ -141,6 +141,22 @@ export async function getAppointmentManagementData(organizationId: string) {
   };
 }
 
+export async function getClientsManagementData(organizationId: string) {
+  return db.client.findMany({
+    where: { organizationId },
+    include: {
+      appointments: {
+        include: {
+          professional: true,
+          service: true,
+        },
+        orderBy: { startAt: "desc" },
+      },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+}
+
 export async function getAgendaDay(organizationId: string, date: Date, professionalId?: string) {
   return db.appointment.findMany({
     where: {
