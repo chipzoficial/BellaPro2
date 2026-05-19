@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatMoney } from "@/lib/utils";
 import { EmptyState } from "@/components/shared/empty-state";
 import { toast } from "@/components/ui/use-toast";
@@ -84,6 +84,7 @@ export function ServicosPage({
       <div className="flex justify-end">
         <Button
           type="button"
+          className="w-full md:w-auto"
           onClick={() => {
             setSelectedId(null);
             form.reset({ name: "", description: "", durationMinutes: 60, priceInCents: "0,00", isActive: true, professionalIds: [] });
@@ -96,16 +97,25 @@ export function ServicosPage({
       <section className="space-y-3">
         {services.length ? (
           services.map((service) => (
-            <div key={service.id} className="rounded-2xl border border-border bg-white p-5">
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <h3 className="font-semibold">{service.name}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{service.description || "Sem descrição"}</p>
-                  <p className="mt-3 text-sm">
-                    {service.durationMinutes} min • {formatMoney(service.priceInCents)}
-                  </p>
+            <div key={service.id} className="rounded-[1.5rem] border border-border bg-white p-4 md:p-5">
+              <div className="flex flex-col gap-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold text-foreground">{service.name}</h3>
+                    <p className="mt-2 text-sm text-foreground">
+                      {service.durationMinutes} min • {formatMoney(service.priceInCents)}
+                    </p>
+                  </div>
+                  {!service.isActive ? (
+                    <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">Inativo</span>
+                  ) : null}
                 </div>
-                <div className="flex gap-2">
+
+                {service.description ? (
+                  <p className="text-sm text-muted-foreground">{service.description}</p>
+                ) : null}
+
+                <div className="flex gap-2 border-t border-border pt-4">
                   <Button type="button" variant="outline" onClick={() => {
                     setSelectedId(service.id);
                     form.reset({
@@ -118,10 +128,10 @@ export function ServicosPage({
                       professionalIds: service.professionalServices.map((item) => item.professional.id),
                     });
                     setOpen(true);
-                  }}>
+                  }} className="flex-1 md:flex-none">
                     Editar
                   </Button>
-                  <Button type="button" variant="ghost" onClick={() => startTransition(async () => {
+                  <Button type="button" variant="ghost" className="flex-1 md:flex-none" onClick={() => startTransition(async () => {
                     const result = await toggleServiceStatus(service.id);
                     if (result.success) {
                       toast.success(result.message);
@@ -144,7 +154,6 @@ export function ServicosPage({
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{selectedId ? "Editar serviço" : "Novo serviço"}</DialogTitle>
-            <DialogDescription>Abra o cadastro apenas quando precisar criar ou editar um serviço.</DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
