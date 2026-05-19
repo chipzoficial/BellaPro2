@@ -9,19 +9,30 @@ import { Button } from "@/components/ui/button";
 export default async function ConfiguracoesRoute() {
   const membership = await getCurrentMembership();
   const publicBaseUrl = await getRequestOrigin();
+  const actions = [];
+
+  if (membership.role === Role.ADMIN_GLOBAL) {
+    actions.push(
+      <Button key="admin" asChild variant="outline">
+        <Link href="/admin">Painel admin</Link>
+      </Button>
+    );
+  }
+
+  if (membership.role === Role.OWNER) {
+    actions.push(
+      <Button key="billing" asChild variant="outline">
+        <Link href="/app/assinatura">Cobrança e assinatura</Link>
+      </Button>
+    );
+  }
 
   return (
     <div className="space-y-8">
       <PageHeader
         title="Configurações"
         description="Ajuste os dados do salão e a página de agendamento."
-        action={
-          membership.role === Role.OWNER ? (
-            <Button asChild variant="outline">
-              <Link href="/app/assinatura">Cobrança e assinatura</Link>
-            </Button>
-          ) : null
-        }
+        action={actions.length ? actions : null}
       />
       <ConfiguracoesPage organization={membership.organization} publicBaseUrl={publicBaseUrl} />
     </div>
