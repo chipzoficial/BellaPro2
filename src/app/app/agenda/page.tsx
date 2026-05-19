@@ -8,7 +8,7 @@ export default async function AgendaPage() {
   const membership = await getCurrentMembership();
   const rangeStart = startOfMonth(subMonths(new Date(), 1));
   const rangeEnd = endOfMonth(addMonths(new Date(), 2));
-  const { appointments, professionals } = await getAgendaWorkspace(membership.organizationId, rangeStart, rangeEnd);
+  const { appointments, professionals, blockedTimes } = await getAgendaWorkspace(membership.organizationId, rangeStart, rangeEnd);
 
   return (
     <div className="space-y-6">
@@ -16,7 +16,7 @@ export default async function AgendaPage() {
         title="Agenda"
         description="Acompanhe os horários do dia e os próximos atendimentos."
       />
-      <AgendaWorkspace appointments={appointments} professionals={professionals} />
+      <AgendaWorkspace appointments={appointments} professionals={professionals} blockedTimes={blockedTimes} />
     </div>
   );
 }

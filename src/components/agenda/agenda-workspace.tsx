@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { AppointmentStatus } from "@prisma/client";
 import {
   addDays,
@@ -20,16 +20,19 @@ import {
   subMonths,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useRouter } from "next/navigation";
 import {
   CalendarDays,
   CalendarPlus,
+  CalendarX2,
   ChevronLeft,
   ChevronRight,
   Clock3,
   Scissors,
+  Trash2,
   UserRound,
 } from "lucide-react";
-import { updateAppointmentStatus } from "@/server/actions/domain";
+import { createBlockedTime, deleteBlockedTime, updateAppointmentStatus } from "@/server/actions/domain";
 import { cn, formatDateTime } from "@/lib/utils";
 import { StatusBadge } from "@/components/shared/status-badge";
 import {
@@ -44,9 +47,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/use-toast";
 
 type AgendaAppointment = {
   id: string;
@@ -63,6 +71,15 @@ type AgendaAppointment = {
 type AgendaProfessional = {
   id: string;
   name: string;
+};
+
+type AgendaBlockedTime = {
+  id: string;
+  startAt: Date;
+  endAt: Date;
+  reason: string | null;
+  professionalId: string | null;
+  professional: { id: string; name: string } | null;
 };
 
 const HALF_HOUR = 30;
@@ -116,18 +133,39 @@ function getDayIndicatorCount(appointments: AgendaAppointment[], day: Date) {
 export function AgendaWorkspace({
   appointments,
   professionals,
+  blockedTimes,
 }: {
   appointments: AgendaAppointment[];
   professionals: AgendaProfessional[];
+  blockedTimes: AgendaBlockedTime[];
 }) {
   const today = startOfDay(new Date());
+  const router = useRouter();
   const [agendaAppointments, setAgendaAppointments] = useState(appointments);
+  const [agendaBlockedTimes, setAgendaBlockedTimes] = useState(blockedTimes);
   const [selectedDate, setSelectedDate] = useState(today);
   const [monthDate, setMonthDate] = useState(startOfMonth(today));
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>("all");
   const [selectedAppointment, setSelectedAppointment] = useState<AgendaAppointment | null>(null);
   const [pendingCompletion, setPendingCompletion] = useState<{ id: string } | null>(null);
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+  const [blockForm, setBlockForm] = useState({
+    professionalId: "all",
+    date: format(today, "yyyy-MM-dd"),
+    startTime: "09:00",
+    endTime: "10:00",
+    reason: "",
+  });
   const [isPending, startTransition] = useTransition();
+  const [isBlocking, startBlockingTransition] = useTransition();
+
+  useEffect(() => {
+    setAgendaAppointments(appointments);
+  }, [appointments]);
+
+  useEffect(() => {
+    setAgendaBlockedTimes(blockedTimes);
+  }, [blockedTimes]);
 
   function selectDay(day: Date) {
     const normalizedDay = startOfDay(day);
@@ -153,6 +191,13 @@ export function AgendaWorkspace({
       .filter((item) => selectedProfessionalId === "all" || item.professional.id === selectedProfessionalId)
       .sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
   }, [agendaAppointments, selectedDate, selectedProfessionalId]);
+
+  const selectedDayBlockedTimes = useMemo(() => {
+    return agendaBlockedTimes
+      .filter((item) => isSameDay(item.startAt, selectedDate))
+      .filter((item) => selectedProfessionalId === "all" || item.professionalId === null || item.professionalId === selectedProfessionalId)
+      .sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
+  }, [agendaBlockedTimes, selectedDate, selectedProfessionalId]);
 
   const timelineBounds = useMemo(() => {
     if (!dayAppointments.length) {
@@ -183,6 +228,17 @@ export function AgendaWorkspace({
     setSelectedAppointment((current) =>
       current && current.id === id ? { ...current, status } : current
     );
+  }
+
+  function openBlockDialog() {
+    setBlockForm({
+      professionalId: selectedProfessionalId === "all" ? "all" : selectedProfessionalId,
+      date: format(selectedDate, "yyyy-MM-dd"),
+      startTime: "09:00",
+      endTime: "10:00",
+      reason: "",
+    });
+    setBlockDialogOpen(true);
   }
 
   return (
@@ -237,6 +293,10 @@ export function AgendaWorkspace({
                 ))}
               </SelectContent>
             </Select>
+            <Button type="button" variant="outline" className="rounded-full" onClick={openBlockDialog}>
+              <CalendarX2 className="h-4 w-4" />
+              Bloquear horário
+            </Button>
             <Button asChild className="rounded-full">
               <Link href="/app/agendamentos?novo=1">
                 <CalendarPlus className="h-4 w-4" />
@@ -369,6 +429,64 @@ export function AgendaWorkspace({
               />
             )}
           </div>
+
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Bloqueios do dia</p>
+                <p className="text-xs text-muted-foreground">Ajustes de indisponibilidade para a data selecionada.</p>
+              </div>
+              <Button type="button" variant="ghost" className="h-8 rounded-full px-3 text-sm" onClick={openBlockDialog}>
+                Bloquear
+              </Button>
+            </div>
+
+            {selectedDayBlockedTimes.length ? (
+              <div className="space-y-2">
+                {selectedDayBlockedTimes.map((blockedTime) => (
+                  <div
+                    key={blockedTime.id}
+                    className="flex items-start justify-between gap-3 rounded-2xl border border-dashed border-border px-4 py-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground">
+                        {format(blockedTime.startAt, "HH:mm")} - {format(blockedTime.endAt, "HH:mm")}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {blockedTime.professional?.name ?? "Toda a equipe"}
+                      </p>
+                      {blockedTime.reason ? (
+                        <p className="mt-1 text-sm text-muted-foreground">{blockedTime.reason}</p>
+                      ) : null}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 shrink-0 rounded-full"
+                      onClick={() => {
+                        startBlockingTransition(async () => {
+                          const result = await deleteBlockedTime(blockedTime.id);
+                          if (!result.success) {
+                            toast.error(result.message);
+                            return;
+                          }
+
+                          setAgendaBlockedTimes((current) => current.filter((item) => item.id !== blockedTime.id));
+                          router.refresh();
+                          toast.success(result.message);
+                        });
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Nenhum bloqueio para este dia.</p>
+            )}
+          </div>
         </section>
 
         <section className="hidden rounded-[1.75rem] border border-border bg-white/80 shadow-soft xl:block">
@@ -476,6 +594,133 @@ export function AgendaWorkspace({
           )}
         </section>
       </div>
+
+      <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bloquear horário</DialogTitle>
+            <DialogDescription>
+              Defina uma indisponibilidade para um profissional ou para toda a equipe.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="blocked-professional">Profissional</Label>
+              <Select
+                value={blockForm.professionalId}
+                onValueChange={(value) => setBlockForm((current) => ({ ...current, professionalId: value }))}
+              >
+                <SelectTrigger id="blocked-professional" className="rounded-xl">
+                  <SelectValue placeholder="Toda a equipe" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toda a equipe</SelectItem>
+                  {professionals.map((professional) => (
+                    <SelectItem key={professional.id} value={professional.id}>
+                      {professional.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2 sm:col-span-1">
+                <Label htmlFor="blocked-date">Data</Label>
+                <Input
+                  id="blocked-date"
+                  type="date"
+                  value={blockForm.date}
+                  onChange={(event) => setBlockForm((current) => ({ ...current, date: event.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="blocked-start">Início</Label>
+                <Input
+                  id="blocked-start"
+                  type="time"
+                  value={blockForm.startTime}
+                  onChange={(event) => setBlockForm((current) => ({ ...current, startTime: event.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="blocked-end">Fim</Label>
+                <Input
+                  id="blocked-end"
+                  type="time"
+                  value={blockForm.endTime}
+                  onChange={(event) => setBlockForm((current) => ({ ...current, endTime: event.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="blocked-reason">Motivo</Label>
+              <Textarea
+                id="blocked-reason"
+                rows={3}
+                placeholder="Ex.: pausa, reunião, atendimento externo"
+                value={blockForm.reason}
+                onChange={(event) => setBlockForm((current) => ({ ...current, reason: event.target.value }))}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setBlockDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              disabled={isBlocking}
+              onClick={() => {
+                startBlockingTransition(async () => {
+                  const result = await createBlockedTime({
+                    professionalId: blockForm.professionalId === "all" ? "" : blockForm.professionalId,
+                    date: blockForm.date,
+                    startTime: blockForm.startTime,
+                    endTime: blockForm.endTime,
+                    reason: blockForm.reason,
+                  });
+
+                  if (!result.success) {
+                    toast.error(result.message);
+                    return;
+                  }
+
+                  const professional =
+                    blockForm.professionalId === "all"
+                      ? null
+                      : professionals.find((item) => item.id === blockForm.professionalId) ?? null;
+                  const startAt = new Date(`${blockForm.date}T${blockForm.startTime}:00`);
+                  const endAt = new Date(`${blockForm.date}T${blockForm.endTime}:00`);
+
+                  setAgendaBlockedTimes((current) => [
+                    ...current,
+                    {
+                      id: `${startAt.toISOString()}-${blockForm.professionalId}`,
+                      startAt,
+                      endAt,
+                      reason: blockForm.reason.trim() || null,
+                      professionalId: professional?.id ?? null,
+                      professional,
+                    },
+                  ].sort((a, b) => a.startAt.getTime() - b.startAt.getTime()));
+
+                  setSelectedDate(startOfDay(startAt));
+                  setMonthDate(startOfMonth(startAt));
+                  setBlockDialogOpen(false);
+                  router.refresh();
+                  toast.success(result.message);
+                });
+              }}
+            >
+              Salvar bloqueio
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Sheet open={Boolean(selectedAppointment)} onOpenChange={(open) => !open && setSelectedAppointment(null)}>
         <SheetContent side="right" className="overflow-y-auto sm:max-w-xl">

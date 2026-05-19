@@ -59,6 +59,23 @@ export const appointmentSchema = z.object({
   }
 });
 
+export const blockedTimeSchema = z.object({
+  id: z.string().optional(),
+  professionalId: z.string().optional().or(z.literal("")),
+  date: z.string().min(1, "Selecione a data."),
+  startTime: z.string().min(1, "Selecione o horário inicial."),
+  endTime: z.string().min(1, "Selecione o horário final."),
+  reason: z.string().trim().max(160, "Use até 160 caracteres.").optional(),
+}).superRefine((data, ctx) => {
+  if (data.endTime <= data.startTime) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["endTime"],
+      message: "O horário final deve ser maior que o inicial.",
+    });
+  }
+});
+
 export const publicBookingSchema = z.object({
   organizationSlug: slugSchema,
   serviceId: z.string().min(1),

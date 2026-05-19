@@ -72,6 +72,19 @@ export async function getAvailableSlots({
 
   if (!service) return [];
 
+  const organizationBlockedTimes = await db.blockedTime.findMany({
+    where: {
+      organizationId,
+      professionalId: null,
+      startAt: {
+        lte: endOfDay(date),
+      },
+      endAt: {
+        gte: date,
+      },
+    },
+  });
+
   const professionals = await db.professional.findMany({
     where: {
       organizationId,
@@ -118,6 +131,7 @@ export async function getAvailableSlots({
       date,
       professional,
       service,
+      organizationBlockedTimes,
     })
   );
 }
@@ -126,6 +140,7 @@ function buildProfessionalSlots({
   date,
   professional,
   service,
+  organizationBlockedTimes,
 }: {
   date: Date;
   professional: Professional & {
@@ -134,6 +149,7 @@ function buildProfessionalSlots({
     appointments: { startAt: Date; endAt: Date }[];
   };
   service: Service;
+  organizationBlockedTimes: BlockedTime[];
 }): Slot[] {
   const weekDay = weekdays[date.getDay()];
   const hours = professional.businessHours.filter((hour) => hour.weekDay === weekDay);
@@ -153,7 +169,7 @@ function buildProfessionalSlots({
       if (
         !isBefore(cursor, max([now, date])) &&
         isInBusinessHours(cursor, service, [hour]) &&
-        !isBlocked(cursor, service, professional.blockedTimes) &&
+        !isBlocked(cursor, service, [...organizationBlockedTimes, ...professional.blockedTimes]) &&
         !hasConflict
       ) {
         slots.push({

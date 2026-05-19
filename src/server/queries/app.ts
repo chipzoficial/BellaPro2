@@ -250,7 +250,7 @@ export async function getAgendaDay(organizationId: string, date: Date, professio
 }
 
 export async function getAgendaWorkspace(organizationId: string, startDate: Date, endDate: Date) {
-  const [appointments, professionals] = await Promise.all([
+  const [appointments, professionals, blockedTimes] = await Promise.all([
     db.appointment.findMany({
       where: {
         organizationId,
@@ -273,11 +273,32 @@ export async function getAgendaWorkspace(organizationId: string, startDate: Date
       },
       orderBy: { name: "asc" },
     }),
+    db.blockedTime.findMany({
+      where: {
+        organizationId,
+        startAt: {
+          lte: endOfDay(endDate),
+        },
+        endAt: {
+          gte: startOfDay(startDate),
+        },
+      },
+      include: {
+        professional: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: [{ startAt: "asc" }, { endAt: "asc" }],
+    }),
   ]);
 
   return {
     appointments,
     professionals,
+    blockedTimes,
   };
 }
 

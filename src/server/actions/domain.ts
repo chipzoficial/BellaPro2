@@ -14,6 +14,7 @@ import { getAvailableSlots, buildStartDate } from "@/lib/availability";
 import { getCurrentMembership } from "@/lib/auth/session";
 import {
   appointmentSchema,
+  blockedTimeSchema,
   clientSchema,
   organizationSchema,
   professionalSchema,
@@ -661,4 +662,79 @@ export async function getAppointmentAvailability(input: {
     date: buildStartDate(input.date, "00:00"),
     currentAppointmentId: input.currentAppointmentId,
   });
+}
+
+export async function createBlockedTime(input: unknown): Promise<ActionState> {
+  try {
+    const membership = await requireScope("appointments");
+    const parsed = blockedTimeSchema.safeParse(input);
+    if (!parsed.success) return fail("Dados inválidos.", parsed.error.flatten().fieldErrors);
+
+    const data = parsed.data;
+    const startAt = buildStartDate(data.date, data.startTime);
+    const endAt = buildStartDate(data.date, data.endTime);
+
+    if (endAt <= startAt) {
+      return fail("O horário final deve ser maior que o inicial.");
+    }
+
+    if (data.professionalId) {
+      const professional = await db.professional.findFirst({
+        where: {
+          id: data.professionalId,
+          organizationId: membership.organizationId,
+          isActive: true,
+        },
+      });
+
+      if (!professional) {
+        return fail("Profissional inválido.");
+      }
+    }
+
+    await db.blockedTime.create({
+      data: {
+        organizationId: membership.organizationId,
+        professionalId: data.professionalId || null,
+        startAt,
+        endAt,
+        reason: data.reason?.trim() || null,
+      },
+    });
+
+    revalidatePath("/app/agenda");
+    revalidatePath("/app/agendamentos");
+    revalidatePath("/app");
+    return ok("Horário bloqueado com sucesso.");
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : "Erro ao bloquear horário.");
+  }
+}
+
+export async function deleteBlockedTime(id: string): Promise<ActionState> {
+  try {
+    const membership = await requireScope("appointments");
+
+    const blockedTime = await db.blockedTime.findFirst({
+      where: {
+        id,
+        organizationId: membership.organizationId,
+      },
+    });
+
+    if (!blockedTime) {
+      return fail("Bloqueio não encontrado.");
+    }
+
+    await db.blockedTime.delete({
+      where: { id },
+    });
+
+    revalidatePath("/app/agenda");
+    revalidatePath("/app/agendamentos");
+    revalidatePath("/app");
+    return ok("Bloqueio removido.");
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : "Erro ao remover bloqueio.");
+  }
 }
