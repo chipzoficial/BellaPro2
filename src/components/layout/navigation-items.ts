@@ -1,8 +1,8 @@
-import { BriefcaseBusiness, CalendarClock, History, LayoutDashboard, Scissors, Settings, Users, Wallet } from "lucide-react";
+import { BriefcaseBusiness, CalendarClock, CalendarDays, History, LayoutDashboard, Scissors, Settings, Users, Wallet } from "lucide-react";
 
 export const navigationItems = [
   { href: "/app", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/app/agenda", label: "Agenda", icon: CalendarClock },
+  { href: "/app/agenda", label: "Agenda", icon: CalendarDays },
   { href: "/app/agendamentos", label: "Agendamentos", icon: CalendarClock },
   { href: "/app/historico", label: "Histórico", icon: History },
   { href: "/app/clientes", label: "Clientes", icon: Users },
