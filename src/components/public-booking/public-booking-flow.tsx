@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import { formatDateTime } from "@/lib/utils";
 
 type Props = {
@@ -195,36 +196,70 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
-        <div className="grid gap-3 md:grid-cols-4">
-          {steps.map((item) => {
-            const isActive = step === item.number;
-            const isDone = step > item.number;
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-4 rounded-[22px] border border-border bg-white px-4 py-4 md:hidden">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                Etapa {step} de {steps.length}
+              </p>
+              <p className="mt-2 text-lg font-semibold text-foreground">{steps[step - 1].title}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{steps[step - 1].description}</p>
+            </div>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-700 text-sm font-semibold text-white">
+              {step}
+            </span>
+          </div>
 
-            return (
-              <div
-                key={item.number}
-                className={`rounded-2xl border px-4 py-4 ${
-                  isActive ? "border-brand-300 bg-brand-50/80" : isDone ? "border-emerald-200 bg-emerald-50/70" : "border-border bg-white"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
-                      isActive
-                        ? "bg-brand-600 text-white"
-                        : isDone
-                          ? "bg-emerald-600 text-white"
-                          : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {isDone ? <CircleCheckBig className="h-4 w-4" /> : item.number}
-                  </span>
-                  <p className="text-sm font-medium text-foreground">{item.title}</p>
+          <div className="grid grid-cols-4 gap-2 md:hidden">
+            {steps.map((item) => {
+              const isCurrent = item.number === step;
+              const isDone = item.number < step;
+
+              return (
+                <div
+                  key={`${item.number}-mobile`}
+                  className={cn(
+                    "h-1.5 rounded-full transition-colors",
+                    isCurrent && "bg-brand-700",
+                    isDone && "bg-emerald-600",
+                    !isCurrent && !isDone && "bg-border"
+                  )}
+                />
+              );
+            })}
+          </div>
+
+          <div className="hidden gap-3 md:grid md:grid-cols-4">
+            {steps.map((item) => {
+              const isActive = step === item.number;
+              const isDone = step > item.number;
+
+              return (
+                <div
+                  key={item.number}
+                  className={`rounded-2xl border px-4 py-4 ${
+                    isActive ? "border-brand-300 bg-brand-50/80" : isDone ? "border-emerald-200 bg-emerald-50/70" : "border-border bg-white"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
+                        isActive
+                          ? "bg-brand-600 text-white"
+                          : isDone
+                            ? "bg-emerald-600 text-white"
+                            : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {isDone ? <CircleCheckBig className="h-4 w-4" /> : item.number}
+                    </span>
+                    <p className="text-sm font-medium text-foreground">{item.title}</p>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">{item.description}</p>
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">{item.description}</p>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
         <section className="min-h-[360px] rounded-[28px] border border-border bg-white px-6 py-6 md:px-8">
