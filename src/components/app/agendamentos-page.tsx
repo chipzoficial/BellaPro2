@@ -8,6 +8,16 @@ import { useForm } from "react-hook-form";
 import { appointmentSchema } from "@/lib/validations/entities";
 import { getAppointmentAvailability, upsertAppointment, updateAppointmentStatus } from "@/server/actions/domain";
 import { StatusBadge } from "@/components/shared/status-badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -47,6 +57,7 @@ export function AgendamentosPage({
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [open, setOpen] = useState(false);
   const [clientMode, setClientMode] = useState<"existing" | "new">("existing");
+  const [pendingCompletion, setPendingCompletion] = useState<{ id: string } | null>(null);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [availableSlots, setAvailableSlots] = useState<Array<{ time: string; professionalId: string; professionalName: string }>>([]);
@@ -165,6 +176,15 @@ export function AgendamentosPage({
       .slice(0, 6);
   }, [clientMode, clients, watchedClientName]);
 
+  async function handleStatusChange(id: string, nextStatus: AppointmentStatus) {
+    const result = await updateAppointmentStatus(id, nextStatus);
+    if (result.success) {
+      toast.success(result.message);
+    } else {
+      toast.error(result.message);
+    }
+  }
+
   return (
     <div className="w-full">
       <section className="space-y-4">
@@ -256,15 +276,14 @@ export function AgendamentosPage({
                   type="button"
                   variant="ghost"
                   className="flex-1"
-                  onClick={() => startTransition(async () => {
+                  onClick={() => {
                     const nextStatus = item.status === AppointmentStatus.CONFIRMED ? AppointmentStatus.COMPLETED : AppointmentStatus.CONFIRMED;
-                    const result = await updateAppointmentStatus(item.id, nextStatus);
-                    if (result.success) {
-                      toast.success(result.message);
-                    } else {
-                      toast.error(result.message);
+                    if (nextStatus === AppointmentStatus.COMPLETED) {
+                      setPendingCompletion({ id: item.id });
+                      return;
                     }
-                  })}
+                    startTransition(() => handleStatusChange(item.id, nextStatus));
+                  }}
                 >
                   {item.status === AppointmentStatus.CONFIRMED ? "Concluir" : "Confirmar"}
                 </Button>
@@ -315,15 +334,14 @@ export function AgendamentosPage({
                       });
                       setOpen(true);
                     }}>Editar</Button>
-                    <Button type="button" variant="ghost" onClick={() => startTransition(async () => {
+                    <Button type="button" variant="ghost" onClick={() => {
                       const nextStatus = item.status === AppointmentStatus.CONFIRMED ? AppointmentStatus.COMPLETED : AppointmentStatus.CONFIRMED;
-                      const result = await updateAppointmentStatus(item.id, nextStatus);
-                      if (result.success) {
-                        toast.success(result.message);
-                      } else {
-                        toast.error(result.message);
+                      if (nextStatus === AppointmentStatus.COMPLETED) {
+                        setPendingCompletion({ id: item.id });
+                        return;
                       }
-                    })}>
+                      startTransition(() => handleStatusChange(item.id, nextStatus));
+                    }}>
                       {item.status === AppointmentStatus.CONFIRMED ? "Concluir" : "Confirmar"}
                     </Button>
                   </div>
@@ -587,6 +605,29 @@ export function AgendamentosPage({
           </Form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={Boolean(pendingCompletion)} onOpenChange={(open) => !open && setPendingCompletion(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Concluir atendimento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja concluir e encerrar esse serviço?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingCompletion) return;
+                startTransition(() => handleStatusChange(pendingCompletion.id, AppointmentStatus.COMPLETED));
+                setPendingCompletion(null);
+              }}
+            >
+              Concluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

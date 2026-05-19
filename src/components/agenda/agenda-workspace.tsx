@@ -32,6 +32,16 @@ import {
 import { updateAppointmentStatus } from "@/server/actions/domain";
 import { cn, formatDateTime } from "@/lib/utils";
 import { StatusBadge } from "@/components/shared/status-badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -116,6 +126,7 @@ export function AgendaWorkspace({
   const [monthDate, setMonthDate] = useState(startOfMonth(today));
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>("all");
   const [selectedAppointment, setSelectedAppointment] = useState<AgendaAppointment | null>(null);
+  const [pendingCompletion, setPendingCompletion] = useState<{ id: string } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function selectDay(day: Date) {
@@ -161,6 +172,18 @@ export function AgendaWorkspace({
   const totalMinutes = (timelineBounds.endHour - timelineBounds.startHour) * 60;
   const timelineHeight = (totalMinutes / HALF_HOUR) * SLOT_HEIGHT;
   const timelineCanvasHeight = timelineHeight + TIMELINE_TOP_OFFSET;
+
+  async function applyStatusChange(id: string, status: AppointmentStatus) {
+    await updateAppointmentStatus(id, status);
+    setAgendaAppointments((current) =>
+      current.map((item) =>
+        item.id === id ? { ...item, status } : item
+      )
+    );
+    setSelectedAppointment((current) =>
+      current && current.id === id ? { ...current, status } : current
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -531,20 +554,14 @@ export function AgendaWorkspace({
                           type="button"
                           variant={action.status === AppointmentStatus.CANCELED ? "outline" : "default"}
                           disabled={isPending}
-                          onClick={() =>
-                            startTransition(async () => {
-                              await updateAppointmentStatus(selectedAppointment.id, action.status);
-                              setAgendaAppointments((current) =>
-                                current.map((item) =>
-                                  item.id === selectedAppointment.id ? { ...item, status: action.status } : item
-                                )
-                              );
-                              setSelectedAppointment({
-                                ...selectedAppointment,
-                                status: action.status,
-                              });
-                            })
-                          }
+                          onClick={() => {
+                            if (action.status === AppointmentStatus.COMPLETED) {
+                              setPendingCompletion({ id: selectedAppointment.id });
+                              return;
+                            }
+
+                            startTransition(() => applyStatusChange(selectedAppointment.id, action.status));
+                          }}
                         >
                           {action.label}
                         </Button>
@@ -561,6 +578,29 @@ export function AgendaWorkspace({
           ) : null}
         </SheetContent>
       </Sheet>
+
+      <AlertDialog open={Boolean(pendingCompletion)} onOpenChange={(open) => !open && setPendingCompletion(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Concluir atendimento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja concluir e encerrar esse serviço?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingCompletion) return;
+                startTransition(() => applyStatusChange(pendingCompletion.id, AppointmentStatus.COMPLETED));
+                setPendingCompletion(null);
+              }}
+            >
+              Concluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
