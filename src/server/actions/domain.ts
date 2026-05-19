@@ -38,9 +38,13 @@ async function resolveAppointmentClient(params: {
   clientId?: string;
   clientName: string;
   clientPhone?: string;
+  clientEmail?: string;
+  clientNotes?: string;
 }) {
   const normalizedName = params.clientName.trim();
   const normalizedPhone = params.clientPhone?.trim() || null;
+  const normalizedEmail = params.clientEmail?.trim().toLowerCase() || null;
+  const normalizedNotes = params.clientNotes?.trim() || null;
 
   if (params.clientId) {
     const existingById = await db.client.findFirst({
@@ -51,18 +55,50 @@ async function resolveAppointmentClient(params: {
     });
 
     if (existingById) {
+      const shouldUpdateName = existingById.name !== normalizedName;
+      const shouldUpdatePhone = !existingById.phone && normalizedPhone;
+      const shouldUpdateEmail = !existingById.email && normalizedEmail;
+      const shouldUpdateNotes = !existingById.notes && normalizedNotes;
+
+      if (shouldUpdateName || shouldUpdatePhone || shouldUpdateEmail || shouldUpdateNotes) {
+        await db.client.update({
+          where: { id: existingById.id },
+          data: {
+            name: normalizedName,
+            phone: shouldUpdatePhone ? normalizedPhone : existingById.phone,
+            email: shouldUpdateEmail ? normalizedEmail : existingById.email,
+            notes: shouldUpdateNotes ? normalizedNotes : existingById.notes,
+          },
+        });
+      }
+
       return existingById.id;
     }
   }
 
-  const existingClient = normalizedPhone
+  let existingClient = normalizedPhone
     ? await db.client.findFirst({
         where: {
           organizationId: params.organizationId,
           phone: normalizedPhone,
         },
       })
-    : await db.client.findFirst({
+    : null;
+
+  if (!existingClient && normalizedEmail) {
+    existingClient = await db.client.findFirst({
+      where: {
+        organizationId: params.organizationId,
+        email: {
+          equals: normalizedEmail,
+          mode: "insensitive",
+        },
+      },
+    });
+  }
+
+  if (!existingClient) {
+    existingClient = await db.client.findFirst({
           where: {
             organizationId: params.organizationId,
             name: {
@@ -71,17 +107,22 @@ async function resolveAppointmentClient(params: {
             },
           },
         });
+  }
 
   if (existingClient) {
     const shouldUpdateName = existingClient.name !== normalizedName;
     const shouldUpdatePhone = !existingClient.phone && normalizedPhone;
+    const shouldUpdateEmail = !existingClient.email && normalizedEmail;
+    const shouldUpdateNotes = !existingClient.notes && normalizedNotes;
 
-    if (shouldUpdateName || shouldUpdatePhone) {
+    if (shouldUpdateName || shouldUpdatePhone || shouldUpdateEmail || shouldUpdateNotes) {
       await db.client.update({
         where: { id: existingClient.id },
         data: {
           name: normalizedName,
           phone: shouldUpdatePhone ? normalizedPhone : existingClient.phone,
+          email: shouldUpdateEmail ? normalizedEmail : existingClient.email,
+          notes: shouldUpdateNotes ? normalizedNotes : existingClient.notes,
         },
       });
     }
@@ -94,6 +135,8 @@ async function resolveAppointmentClient(params: {
       organizationId: params.organizationId,
       name: normalizedName,
       phone: normalizedPhone,
+      email: normalizedEmail,
+      notes: normalizedNotes,
     },
   });
 
@@ -579,15 +622,21 @@ export async function createPublicBooking(input: unknown): Promise<ActionState> 
     });
     if (!service) return fail("Serviço inválido.");
 
-    const client = await db.client.create({
-      data: {
-        organizationId: organization.id,
-        name: data.name,
-        phone: data.phone || null,
-        email: data.email || null,
-        notes: data.notes || null,
-      },
+    const clientId = await resolveAppointmentClient({
+      organizationId: organization.id,
+      clientName: data.name,
+      clientPhone: data.phone || undefined,
+      clientEmail: data.email || undefined,
+      clientNotes: data.notes || undefined,
     });
+
+    const client = await db.client.findUnique({
+      where: { id: clientId },
+    });
+
+    if (!client) {
+      return fail("Cliente inválido.");
+    }
 
     const appointment = await db.appointment.create({
       data: {
@@ -693,6 +742,33 @@ export async function createBlockedTime(input: unknown): Promise<ActionState> {
       }
     }
 
+    const conflictingAppointments = await db.appointment.findMany({
+      where: {
+        organizationId: membership.organizationId,
+        ...(data.professionalId ? { professionalId: data.professionalId } : {}),
+        status: {
+          in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED],
+        },
+        startAt: { lt: endAt },
+        endAt: { gt: startAt },
+      },
+      include: {
+        client: true,
+        professional: true,
+      },
+      orderBy: { startAt: "asc" },
+      take: 1,
+    });
+
+    if (conflictingAppointments.length) {
+      const conflict = conflictingAppointments[0];
+      return fail(
+        data.professionalId
+          ? `Já existe um atendimento de ${conflict.client.name} nesse horário para ${conflict.professional.name}.`
+          : "Já existe atendimento marcado nesse período. Ajuste a agenda antes de bloquear esse horário."
+      );
+    }
+
     await db.blockedTime.create({
       data: {
         organizationId: membership.organizationId,
@@ -755,6 +831,48 @@ export async function updateProfessionalBusinessHours(input: unknown): Promise<A
 
     if (!professional) {
       return fail("Profissional não encontrado.");
+    }
+
+    const activeDays = parsed.data.days.filter((day) => day.isActive);
+    const allowedRangesByWeekday = new Map(
+      activeDays.map((day) => [day.weekDay, { startTime: day.startTime, endTime: day.endTime }])
+    );
+    const weekdays = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"] as const;
+    const futureAppointments = await db.appointment.findMany({
+      where: {
+        organizationId: membership.organizationId,
+        professionalId: professional.id,
+        startAt: {
+          gte: new Date(),
+        },
+        status: {
+          in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED],
+        },
+      },
+      include: {
+        client: true,
+      },
+      orderBy: { startAt: "asc" },
+    });
+
+    for (const appointment of futureAppointments) {
+      const appointmentWeekday = weekdays[appointment.startAt.getDay()];
+      const allowedRange = allowedRangesByWeekday.get(appointmentWeekday);
+
+      if (!allowedRange) {
+        return fail(
+          `Existe atendimento futuro de ${appointment.client.name} em um dia que ficará indisponível para esse profissional.`
+        );
+      }
+
+      const appointmentStart = appointment.startAt.toTimeString().slice(0, 5);
+      const appointmentEnd = appointment.endAt.toTimeString().slice(0, 5);
+
+      if (appointmentStart < allowedRange.startTime || appointmentEnd > allowedRange.endTime) {
+        return fail(
+          `Existe atendimento futuro de ${appointment.client.name} fora do novo horário configurado para esse profissional.`
+        );
+      }
     }
 
     await db.$transaction(async (tx) => {
