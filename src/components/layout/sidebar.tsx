@@ -1,21 +1,26 @@
 import Link from "next/link";
+import type { Role } from "@prisma/client";
 import { AlertCircle, Sparkles } from "lucide-react";
 import { formatDateTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { AppLogo } from "@/components/brand/app-logo";
-import { navigationItems } from "@/components/layout/navigation-items";
+import { getNavigationItems } from "@/components/layout/navigation-items";
 
 export function Sidebar({
   pathname,
+  role,
   subscriptionNotice,
 }: {
   pathname: string;
+  role: Role;
   subscriptionNotice: {
     currentPeriodEnd: Date;
     daysRemaining: number;
     isExpiringSoon: boolean;
   } | null;
 }) {
+  const navigationItems = getNavigationItems(role);
+
   return (
     <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-r border-border bg-[#fffaf9] px-5 py-6 lg:flex lg:flex-col">
       <div className="mb-8">

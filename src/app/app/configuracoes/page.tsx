@@ -7,7 +7,7 @@ import { ConfiguracoesPage } from "@/components/app/configuracoes-page";
 import { Button } from "@/components/ui/button";
 
 export default async function ConfiguracoesRoute() {
-  const membership = await getCurrentMembership();
+  const membership = await getCurrentMembership([Role.OWNER]);
   const publicBaseUrl = await getRequestOrigin();
   const actions = [];
 

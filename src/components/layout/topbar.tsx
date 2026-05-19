@@ -1,3 +1,4 @@
+import type { Role } from "@prisma/client";
 import { LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -7,10 +8,12 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 export function Topbar({
   salonName,
   userName,
+  role,
   subscriptionNotice,
 }: {
   salonName: string;
   userName: string;
+  role: Role;
   subscriptionNotice: {
     currentPeriodEnd: Date;
     daysRemaining: number;
@@ -20,7 +23,7 @@ export function Topbar({
   return (
     <div className="flex items-center justify-between gap-3 border-b border-border bg-white/70 px-4 py-4 backdrop-blur md:px-6">
       <div className="flex items-center gap-3">
-        <MobileNav subscriptionNotice={subscriptionNotice} />
+        <MobileNav role={role} subscriptionNotice={subscriptionNotice} />
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Salão atual</p>
           <p className="text-sm font-semibold text-foreground">{salonName}</p>

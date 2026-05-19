@@ -1,10 +1,11 @@
+import { Role } from "@prisma/client";
 import { getCurrentMembership } from "@/lib/auth/session";
 import { getOrganizationSummary } from "@/server/queries/app";
 import { PageHeader } from "@/components/shared/page-header";
 import { ProfissionaisPage } from "@/components/app/profissionais-page";
 
 export default async function ProfissionaisRoute() {
-  const membership = await getCurrentMembership();
+  const membership = await getCurrentMembership([Role.OWNER, Role.MANAGER]);
   const summary = await getOrganizationSummary(membership.organizationId);
 
   return (

@@ -1,17 +1,19 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { SubscriptionStatus } from "@prisma/client";
+import { Role, SubscriptionStatus } from "@prisma/client";
 import { AppShell } from "@/components/layout/app-shell";
 
 export function AuthenticatedShell({
   salonName,
   userName,
+  role,
   subscriptionNotice,
   children,
 }: {
   salonName: string;
   userName: string;
+  role: Role;
   subscriptionNotice: {
     status: SubscriptionStatus;
     planName: string;
@@ -28,6 +30,7 @@ export function AuthenticatedShell({
       pathname={pathname}
       salonName={salonName}
       userName={userName}
+      role={role}
       subscriptionNotice={subscriptionNotice}
     >
       {children}

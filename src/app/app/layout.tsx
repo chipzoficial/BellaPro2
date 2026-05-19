@@ -11,6 +11,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <AuthenticatedShell
       salonName={membership.organization.name}
       userName={user.name}
+      role={membership.role}
       subscriptionNotice={subscriptionNotice}
     >
       {children}

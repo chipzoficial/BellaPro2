@@ -2,16 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import type { Role } from "@prisma/client";
 import { AlertCircle, Menu, Sparkles } from "lucide-react";
 import { cn, formatDateTime } from "@/lib/utils";
 import { AppLogo } from "@/components/brand/app-logo";
-import { navigationItems } from "@/components/layout/navigation-items";
+import { getNavigationItems } from "@/components/layout/navigation-items";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export function MobileNav({
+  role,
   subscriptionNotice,
 }: {
+  role: Role;
   subscriptionNotice: {
     currentPeriodEnd: Date;
     daysRemaining: number;
@@ -19,6 +22,7 @@ export function MobileNav({
   } | null;
 }) {
   const [open, setOpen] = useState(false);
+  const navigationItems = getNavigationItems(role);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>

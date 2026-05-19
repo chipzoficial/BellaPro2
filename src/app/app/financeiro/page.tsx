@@ -1,3 +1,4 @@
+import { Role } from "@prisma/client";
 import { getCurrentMembership } from "@/lib/auth/session";
 import { getFinancialOverview, type FinancialPeriod } from "@/server/queries/app";
 import { PageHeader } from "@/components/shared/page-header";
@@ -11,7 +12,7 @@ export default async function FinanceiroRoute({
 }: {
   searchParams?: Promise<{ period?: string }>;
 }) {
-  const membership = await getCurrentMembership();
+  const membership = await getCurrentMembership([Role.OWNER, Role.MANAGER]);
   const resolvedSearchParams = await searchParams;
   const period = allowedPeriods.includes(resolvedSearchParams?.period as FinancialPeriod)
     ? (resolvedSearchParams?.period as FinancialPeriod)
