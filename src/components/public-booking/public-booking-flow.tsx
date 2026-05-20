@@ -514,14 +514,14 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
                 <ReviewBlock title="Telefone" value={form.getValues("phone") || "-"} />
               </div>
 
-              <div className="rounded-2xl border border-border bg-muted/20 px-4 py-4">
+              <div className="rounded-xl bg-muted/20 px-4 py-4">
                 <p className="text-sm font-medium text-foreground">Observações</p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {form.getValues("notes") || "Nenhuma observação informada."}
                 </p>
               </div>
 
-              <label className="flex items-start gap-3 rounded-2xl border border-border px-4 py-4">
+              <label className="flex items-start gap-3 border-t border-border/70 pt-4">
                 <input
                   type="checkbox"
                   checked={acceptedReview}

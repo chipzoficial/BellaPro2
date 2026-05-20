@@ -54,9 +54,25 @@ function FormControl({ ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return <div {...props} />;
 }
 
+function normalizeFormErrorMessage(message: string) {
+  if (/expected string to have >=\d+ characters/i.test(message) || /too small/i.test(message)) {
+    return "Preencha este campo corretamente.";
+  }
+
+  if (/invalid email/i.test(message)) {
+    return "Informe um e-mail válido.";
+  }
+
+  if (/expected number/i.test(message)) {
+    return "Informe um valor válido.";
+  }
+
+  return message;
+}
+
 function FormMessage({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
   const { error } = useFormField();
-  const body = error ? String(error.message) : props.children;
+  const body = error ? normalizeFormErrorMessage(String(error.message)) : props.children;
 
   if (!body) return null;
 

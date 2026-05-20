@@ -14,4 +14,10 @@ export const slugSchema = z
   .refine((value) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value), "Slug inválido.")
   .refine((value) => !isReservedSlug(value), "Esse slug é reservado pelo sistema.");
 
-export const phoneSchema = z.string().trim().min(8).max(20).optional().or(z.literal(""));
+export const phoneSchema = z
+  .string()
+  .trim()
+  .min(8, "Informe um telefone válido.")
+  .max(20, "Informe um telefone válido.")
+  .optional()
+  .or(z.literal(""));
