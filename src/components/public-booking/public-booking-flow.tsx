@@ -264,7 +264,7 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
 
         <section className="min-h-[360px] rounded-[28px] border border-border bg-white px-6 py-6 md:px-8">
           {step === 1 ? (
-            <div className="space-y-6">
+            <div className="space-y-5">
               <StepHeader
                 title="Passo 1: Selecionar serviço e profissional"
                 description="Comece escolhendo qual atendimento deseja e quem vai realizá-lo."
@@ -343,7 +343,7 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
           ) : null}
 
           {step === 2 ? (
-            <div className="space-y-6">
+            <div className="space-y-5">
               <StepHeader
                 title="Passo 2: Selecionar dia e horário"
                 description="Escolha a data e depois toque em um horário disponível para continuar."
@@ -425,7 +425,7 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
           ) : null}
 
           {step === 3 ? (
-            <div className="space-y-6">
+            <div className="space-y-5">
               <StepHeader
                 title="Passo 3: Dados do cliente"
                 description="Preencha os dados para o salão identificar e confirmar seu atendimento."
@@ -499,7 +499,7 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
           ) : null}
 
           {step === 4 ? (
-            <div className="space-y-6">
+            <div className="space-y-5">
               <StepHeader
                 title="Passo 4: Revisar e aceitar"
                 description="Confira os dados abaixo. Quando estiver tudo certo, aceite a revisão e solicite o agendamento."
@@ -568,12 +568,9 @@ export function PublicBookingFlow({ slug, services, professionals, slots }: Prop
 }
 
 function StepHeader({ title, description }: { title: string; description: string }) {
-  return (
-    <div>
-      <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-    </div>
-  );
+  void title;
+  void description;
+  return null;
 }
 
 function SummaryStrip({
@@ -586,7 +583,7 @@ function SummaryStrip({
   description: string;
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-2xl border border-border bg-muted/20 px-4 py-4">
+    <div className="flex items-start gap-3 border-t border-border/70 pt-4">
       <div className="mt-0.5">{icon}</div>
       <div>
         <p className="font-medium text-foreground">{title}</p>
@@ -598,7 +595,7 @@ function SummaryStrip({
 
 function ReviewBlock({ title, value }: { title: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border px-4 py-4">
+    <div className="rounded-xl bg-muted/20 px-4 py-4">
       <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
       <p className="mt-2 font-medium text-foreground">{value}</p>
     </div>
